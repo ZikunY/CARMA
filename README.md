@@ -1,22 +1,11 @@
 # CARMA
-GWAS genetics Fine-mapping method
-A First Level Header
-====================
+## Novel Bayesian model for fine-mapping in meta-analysis studies
 
-A Second Level Header
----------------------
 
-Now is the time for all good men to come to
-the aid of their country. This is just a
-regular paragraph.
+We propose a novel Bayesian model, CARMA (CAusal Robust mapping method in Meta-Analysis studies), for fine-mapping in order to identify putative causal variants at GWAS loci. The main features of CARMA are
 
-The quick brown fox jumped over the lazy
-dog's back.
-
-### Header 3
-
-> This is a blockquote.
-> 
-> This is the second paragraph in the blockquote.
+> Replacing the Normal-Gamma prior family for the effect size distribution by a heavy-tail Cauchy distribution to achieve higher power
 >
-> ## This is an H2 in a blockquote
+> Jointly modeling summary statistics and high-dimensional functional annotations
+>
+> Introducing a novel Bayesian hypothesis testing approach to account for discrepancies between summary statistics and LD from external reference panels
