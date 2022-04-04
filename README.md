@@ -6,6 +6,6 @@ We propose a novel Bayesian model, CARMA (CAusal Robust mapping method in Meta-A
 
 > Replacing the Normal-Gamma prior family for the effect size distribution by a heavy-tail Cauchy distribution to achieve higher power
 >
-> Jointly modeling summary statistics and high-dimensional functional annotations
+> Modeling jointly summary statistics and high-dimensional functional annotations
 >
 > Introducing a novel Bayesian hypothesis testing approach to account for discrepancies between summary statistics and LD from external reference panels
