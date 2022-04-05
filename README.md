@@ -11,5 +11,7 @@ We propose a novel Bayesian model, CARMA (CAusal Robust mapping method in Meta-A
 > Introducing a novel Bayesian hypothesis testing approach to account for discrepancies between summary statistics and LD from external reference panels
 
 ### Vignettes
-Vignettes can be found at [https://github.com/ZikunY/CARMA/blob/master/CARMA_demo.pdf]
+Vignettes can be found at [https://github.com/ZikunY/CARMA/blob/master/CARMA_demo.pdf].
 
+### Package manual
+The manual can be found at [https://github.com/ZikunY/CARMA/blob/master/CARMA_1.0.pdf].
