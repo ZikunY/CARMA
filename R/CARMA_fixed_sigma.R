@@ -7,7 +7,7 @@
 #'@param z.list Input list of the summary statistics of the testing loci, and each element of the list is the summary statistics of each individual locus.
 #'@param ld.list Input list of the LD correlation matrix of the testing loci, and each element of the list is the LD matrix of each individual locus.
 #'@param w.list Input list of the functional annotations of the testing loci, and each element of the list is the functional annotation matrix of each individual locus.
-#'@param lambda.list Input list of the hyper-parameter \eqn{\eta} of the testing loci, and each element of the list is the hyper-parameter of each individual locus.
+#'@param lambda.list The default input is NULL as \eqn{\eta} is chosen through an adaptive procedure.
 #'@param label.list Input list of the names of the testing loci. Default is NULL. 
 #'@param effect.size.prior The prior of the effect size. The choice are 'Cauchy' and 'Hyper-g' priors, where the Cauchy prior is the default prior.
 #'@param input.alpha The elastic net mixing parameter, where \eqn{0\le}\eqn{\alpha}\eqn{\le 1}.
@@ -46,12 +46,9 @@
 #'z.list[[1]]<-(SS$betahat/SS$sebetahat)
 #'ld.list<-list()
 #'ld.list[[1]]<-cov(X)
-#'lambda.list<-list()
-#'lambda.list[[1]]<-1/sqrt(p)
-#'CARMA.result<-CARMA_fixed_sigma(z.list,ld.list=ld.list,
-#'lambda.list = lambda.list,effect.size.prior='Hyper-g')
+#'CARMA.result<-CARMA_fixed_sigma(z.list,ld.list=ld.list,effect.size.prior='Hyper-g')
 CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels=NULL,label.list=NULL,
-                                 effect.size.prior='Cauchy',rho.index=0.99,BF.index=10,inner.cor.threhold=0.999999999,
+                                 effect.size.prior='Cauchy',rho.index=0.99,BF.index=10,
                                 Max.Model.Dim=1e+4,all.iter=10,all.inner.iter=10,input.alpha=0.5,epsilon.threshold=1e-3,
                                  num.causal=10,y.var=1,outlier.switch=T,outlier.threshold=1e-3,outlier.cor.range.threshold=0.9){
   EM.M.step.func<-function(Model.space=NULL,w=w,input.alpha=0.5){
@@ -151,8 +148,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     
     
   }
-
-  
   eta.adapt.function<-function(input.z,input.ld,quan=c(0.99)){
     
     eta.setting.func<-function(p.power){
@@ -182,8 +177,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     return(result.lambda.power)
     
   }
-  
-  
   ########## Input data#########
   {
     log.2pi<-log(2*pi)
@@ -255,7 +248,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
 
 #########Module model##########
   
-  Module.Cauchy.Shotgun<-function(z,ld.matrix,Max.Model.Dim=1e+4,input.S=NULL,lambda,label,inner.cor.threhold=0.999999999,
+  Module.Cauchy.Shotgun<-function(z,ld.matrix,Max.Model.Dim=1e+4,input.S=NULL,lambda,label,
                                               num.causal=10,output.labels,y.var=1,effect.size.prior=effect.size.prior,model.prior=model.prior,
                                               outlier.switch,outlier.cor.range.threshold,outlier.threshold=1e-3,input.conditional.S.list=NULL,
                                               C.list=NULL,prior.prob=NULL,epsilon=1e-3,inner.all.iter=10){
@@ -357,7 +350,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     
   
     
-     set.gamma.func<-function(input.S,condition.index=NULL){
+    set.gamma.func<-function(input.S,condition.index=NULL){
        set.gamma.func.base<-function(S){
          add.function<-function(y){results<-(apply(as.matrix(S_sub),1,function(x){return(sort(c(x,y)))}))
          return(t(results))
@@ -454,8 +447,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       }
       return(results)
     }
-   
-    
     duplicated.dgCMatrix <- function (dgCMat, MARGIN) {
       MARGIN <- as.integer(MARGIN)
       n <- nrow(dgCMat)
@@ -527,8 +518,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       return(result)
       
     }
-    
-    
     PIP.func<-function(likeli,model.space){
       infi.index<-which(is.infinite(likeli))
       if(length(infi.index)!=0){
@@ -828,7 +817,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
           #print(h)
           }
          if(outlier.switch){
-           
+           inner.cor.threhold=0.99999
            test.S<-set.gamma[[which.max(set.star$margin)]][set.star$gamma.set.index[[which.max(set.star$margin)]] ,]
            
             outlier.table<-data.frame(matrix(NA,nrow = 0,ncol=5))
@@ -964,7 +953,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
   for(i in 1:L){
     t0=Sys.time()
    
-   all.C.list[[i]]<-Module.Cauchy.Shotgun(z.list[[i]],ld.list[[i]],epsilon=epsilon.list[[i]],inner.cor.threhold=inner.cor.threhold,
+   all.C.list[[i]]<-Module.Cauchy.Shotgun(z.list[[i]],ld.list[[i]],epsilon=epsilon.list[[i]],
                                            Max.Model.Dim=Max.Model.Dim,lambda = lambda.list[[i]],
                                           outlier.switch=outlier.switch,outlier.threshold=outlier.threshold,outlier.cor.range.threshold=outlier.cor.range.threshold,
                                            num.causal = num.causal,y.var=y.var,
@@ -1067,7 +1056,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     ########    
     for(i in 1:L){
       t0=Sys.time()
-      all.C.list[[i]]<-Module.Cauchy.Shotgun(z=z.list[[i]],ld.list[[i]],input.conditional.S.list = all.C.list[[i]][[4]],inner.cor.threhold=inner.cor.threhold,
+      all.C.list[[i]]<-Module.Cauchy.Shotgun(z=z.list[[i]],ld.list[[i]],input.conditional.S.list = all.C.list[[i]][[4]],
                                              Max.Model.Dim=Max.Model.Dim,y.var=y.var,num.causal = num.causal,epsilon=epsilon.list[[i]],
                                              C.list = all.C.list[[i]][[2]],prior.prob = prior.prob.list[[i]],
                                              outlier.switch=outlier.switch,outlier.threshold=outlier.threshold,outlier.cor.range.threshold=outlier.cor.range.threshold,
