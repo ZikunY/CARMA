@@ -17,6 +17,11 @@ Vignettes can be found at [https://github.com/ZikunY/CARMA/blob/master/CARMA_dem
 The manual can be found at [https://github.com/ZikunY/CARMA/blob/master/CARMA_1.0.pdf].
 
 ### Installation
-```console
-sss
+```r
+devtools::install_github("ZikunY/CARMA")
 ```
+
+### Citation
+
+> Yang, Z.,  Wang C, Khan A, Vardarajan B,  Mayeux R,  Kiryluk D, Ionita-Laza I, 
+> "CARMA: Novel Bayesian model for fine-mapping in meta-analysis studies"
