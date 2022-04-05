@@ -14,7 +14,6 @@ CARMA_fixed_sigma(
   effect.size.prior = "Cauchy",
   rho.index = 0.99,
   BF.index = 10,
-  inner.cor.threhold = 0.999999999,
   Max.Model.Dim = 10000,
   all.iter = 10,
   all.inner.iter = 10,
@@ -34,7 +33,7 @@ CARMA_fixed_sigma(
 
 \item{w.list}{Input list of the functional annotations of the testing loci, and each element of the list is the functional annotation matrix of each individual locus.}
 
-\item{lambda.list}{Input list of the hyper-parameter \eqn{\eta} of the testing loci, and each element of the list is the hyper-parameter of each individual locus.}
+\item{lambda.list}{The default input is NULL as \eqn{\eta} is chosen through an adaptive procedure.}
 
 \item{output.labels}{Output directory where output will be written while CARMA is running. Default is NULL.}
 
@@ -99,8 +98,5 @@ z.list<-list()
 z.list[[1]]<-(SS$betahat/SS$sebetahat)
 ld.list<-list()
 ld.list[[1]]<-cov(X)
-lambda.list<-list()
-lambda.list[[1]]<-1/sqrt(p)
-CARMA.result<-CARMA_fixed_sigma(z.list,ld.list=ld.list,
-lambda.list = lambda.list,effect.size.prior='Hyper-g')
+CARMA.result<-CARMA_fixed_sigma(z.list,ld.list=ld.list,effect.size.prior='Hyper-g')
 }

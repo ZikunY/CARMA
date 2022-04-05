@@ -7,6 +7,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // Cauchy_marginal
 double Cauchy_marginal(const arma::uvec& index_vec_input, const arma::mat& Sigma, const arma::vec& z, const double& zSigmaz, const arma::vec& tau, const double& p, const double& p_S);
 RcppExport SEXP _CARMA_Cauchy_marginal(SEXP index_vec_inputSEXP, SEXP SigmaSEXP, SEXP zSEXP, SEXP zSigmazSEXP, SEXP tauSEXP, SEXP pSEXP, SEXP p_SSEXP) {
