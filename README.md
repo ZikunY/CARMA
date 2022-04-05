@@ -15,3 +15,8 @@ Vignettes can be found at [https://github.com/ZikunY/CARMA/blob/master/CARMA_dem
 
 ### Package manual
 The manual can be found at [https://github.com/ZikunY/CARMA/blob/master/CARMA_1.0.pdf].
+
+### Installation
+```console
+sss
+```
