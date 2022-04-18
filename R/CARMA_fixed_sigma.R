@@ -16,7 +16,7 @@
 #'@param BF.index  A number greater than 1 to specifying the threshold of the Bayes factor of the estimated credible models.
 #'@param outlier.switch The indicator variable of whether turn on the outlier detection. We suggest that the detection should always turn on. 
 #'@param outlier.threshold The Bayes threshold of the hypothesis testing of determining outliers.
-#'@param outlier.cor.range.threshold The correlation threshold of defining the highly correlated group, within which the outlier detection run.
+#'@param outlier.cor.range.threshold The correlation threshold of defining the highly correlated group, within which the outlier detection run. The default is 0.9.
 #'@param num.causal The maximum number of causal variants assumed per locus.
 #'@param Max.Model.Dim Maximum number of the top candidate models based on the unnormalized posterior probability. 
 #'@param all.inner.iter Maximum iterations for Shotgun algorithm to run per iteration within EM algorithm.
@@ -863,7 +863,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                      (a-m1*b)^2/
                        (b^2*sigma1+sigma0)
                    )*exp(
-                     -(a-m1*b)^2/(2*(b^2*sigma1+sigma0))
+                     -abs(a-m1*b)/(2*sqrt(b^2*sigma1+sigma0))
                    )
                    result.table[s.index,]<-c(test.SS[s.index],test.z[s.index,],a,m1,B1)
                  }
