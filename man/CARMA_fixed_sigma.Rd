@@ -63,7 +63,7 @@ CARMA_fixed_sigma(
 
 \item{outlier.threshold}{The Bayes threshold of the hypothesis testing of determining outliers.}
 
-\item{outlier.cor.range.threshold}{The correlation threshold of defining the highly correlated group, within which the outlier detection run.}
+\item{outlier.cor.range.threshold}{The correlation threshold of defining the highly correlated group, within which the outlier detection run. The default is 0.9.}
 }
 \value{
 The form of the return is a list, for each list:
