@@ -11,7 +11,7 @@
 //'@name Cauchy_marginal
 //'@title Marginal likelihood of Cauchy prior
 //‘@usage Cauchy_marginal(index_vec_input, Sigma, z, zSigmaz, p, tau, p_S)
-//'@return marginal likelihood
+//'@return marginal likelihood 
 
 double marginal_fun_indi(const double &zSigmaz_S, const double &tau, const double &p, const double & zSigmaz,const double & p_S){
   double result=pow(tau/(1.00+tau),p_S/2.00)*exp(p/2.00*log(zSigmaz)-p/2.00*log(zSigmaz-zSigmaz_S/(1.00+tau) ) );

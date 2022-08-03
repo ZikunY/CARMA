@@ -50,10 +50,10 @@
 #'lambda.list[[1]]<-1/sqrt(p)
 #'CARMA.result<-CARMA_fixed_sigma(z.list,ld.list=ld.list,
 #'lambda.list = lambda.list,effect.size.prior='Hyper-g')
-CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels=NULL,label.list=NULL,
-                                 effect.size.prior='Cauchy',rho.index=0.99,BF.index=10,inner.cor.threhold=0.999999999,
+CARMA_fixed_sigma_pro<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels=NULL,label.list=NULL,
+                                 effect.size.prior='Cauchy',rho.index=0.99,BF.index=10,
                                 Max.Model.Dim=1e+4,all.iter=10,all.inner.iter=10,input.alpha=0.5,epsilon.threshold=1e-3,
-                                 num.causal=10,y.var=1,outlier.switch=T,outlier.threshold=1e-3,outlier.cor.range.threshold=0.9){
+                                 num.causal=10,y.var=1,outlier.switch=T,outlier.BF.index=10){
   EM.M.step.func<-function(Model.space=NULL,w=w,input.alpha=0.5){
       count.index<-Model.space
         print('this is running!!!')
@@ -153,35 +153,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
   }
 
   
-  eta.adapt.function<-function(input.z,input.ld,quan=c(0.99)){
-    
-    eta.setting.func<-function(p.power){
-      dim.model<-1
-      result<-dim.model*log(p^(-p.power))-p^(-p.power)+lfactorial(p-dim.model)-lfactorial(p)
-      return(result)
-    }
-    
-    
-    
-    tau.sample<-rgamma(1e+5,.5,.5)
-    input.z<-c(input.z)
-    p<-length(input.z)
-   
-    eta.quan<-c()
-    for(s in 1:length(quan)){
-      z.index<-which(abs(input.z)==min(abs(input.z)[which(abs(input.z)>=quantile(abs(input.z),quan[s]))]))[1]
-      
-      all.index<-which(eta.setting.func(seq(0,10,by=0.01))+marginal_likelihood(z.index,input.ld,input.z,tau=tau.sample,p_S=1,1)>0)
-      if(length(all.index)!=0){
-        eta.quan<-c(eta.quan,seq(0,10,by=0.01)[max(all.index)])
-      }else{
-        eta.quan<-c(eta.quan,0)
-      }
-    }
-    result.lambda.power<-c(eta.quan)
-    return(result.lambda.power)
-    
-  }
   
   
   ########## Input data#########
@@ -238,64 +209,85 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     model.prior='Poisson'
     standardize.model.space=T
     
-    if(is.null(lambda.list)){
-    if(effect.size.prior=='Cauchy'){
-      marginal_likelihood=Cauchy_fixed_sigma_marginal
-    }
-    if(effect.size.prior=='Hyper-g'){
-      marginal_likelihood=hyper_g_fixed_sigma_marginal
-    }
-     for(i in 1:L){
-       print(eta.adapt.function(z.list[[i]],input.ld = Sigma.list[[i]]))
-       lambda.list[[i]]<-1/( p.list[[i]]^eta.adapt.function(z.list[[i]],input.ld = Sigma.list[[i]]))
-       }
-    }
+
     print(lambda.list)
   }
-
 #########Module model##########
   
   Module.Cauchy.Shotgun<-function(z,ld.matrix,Max.Model.Dim=1e+4,input.S=NULL,lambda,label,inner.cor.threhold=0.999999999,
                                               num.causal=10,output.labels,y.var=1,effect.size.prior=effect.size.prior,model.prior=model.prior,
-                                              outlier.switch,outlier.cor.range.threshold,outlier.threshold=1e-3,input.conditional.S.list=NULL,
+                                              outlier.switch,input.conditional.S.list=NULL,
                                               C.list=NULL,prior.prob=NULL,epsilon=1e-3,inner.all.iter=10){
        {
-       if(model.prior=='input.prob'){
+         prob.list<-list()
          p<-nrow(z);
-         poisson.prior<-function(dim.model){
-           result<-dim.model*log(lambda)-lambda+lfactorial(p-dim.model)-lfactorial(p)
-           return(result)
-         }
-         prior.prob.list<-list()
-         posi.log.pro.list<-list()
-         nega.log.pro.list<-list()
-         for(pp in 1:100){
-           top.index<-order(prior.prob,decreasing = T)[1:pp]
-           if((poisson.prior(pp)-(sum(log(1-prior.prob[-top.index]))+sum(log(prior.prob[top.index]))))>0){
-             posi.log.pro.list[[pp]]<-log(prior.prob)
-             nega.log.pro.list[[pp]]<-log(1-prior.prob)
-           }else{
-             balance.value<-(poisson.prior(pp)-(sum(log(1-prior.prob[-top.index]))+sum(log(prior.prob[top.index]))))/p
-             balance.value<-exp(balance.value)
-             prior.prob.list[[pp]]<-1-balance.value+balance.value* prior.prob
-             prior.prob.list[[pp]][top.index]<-balance.value* prior.prob[top.index]
-             posi.log.pro.list[[pp]]<-log(prior.prob.list[[pp]])
-             nega.log.pro.list[[pp]]<-log(1-prior.prob.list[[pp]])
-           }
-           
-         }
-         
-         input.prior.dist<-function(x){
-           variable.index<-which(x==1)
-           pp<-length(variable.index)
-           if(any(variable.index)){
-             return( sum((nega.log.pro.list[[pp]][-variable.index]))+sum(( posi.log.pro.list[[pp]][variable.index])))
-           }else{
-             return(poisson.prior(0))
-           }
-         }
-         prior.dist<-input.prior.dist
-       }
+       #  if(model.prior=='input.prob'){
+       #   #lambda=1;p=nrow(pro.data);prior.prob=runif(p,0,0.1)
+       #    # p<-nrow(pro.data)
+       #    # glm.beta=log((min(B,B*1/(1+p))))
+       #   # # p<-nrow(z);
+       #    # B=2e+4
+       #  #    xx<-rep(0,p)
+       # #     xx[1:2]<-1
+       # #      poisson.prior(2)
+       #    # #apply(a2[1:100,],1,input.prior.dist)
+       #  #   input.prior.dist(xx)
+       #    # prior.prob.list[[i]]
+       #    # prior.prob<-prior.prob.list[[i]]
+       #    
+       #    poisson.prior<-function(dim.model){
+       #      result<-dim.model*log(lambda)-lambda+lfactorial(p-dim.model)-lfactorial(p)
+       #      return(result)
+       #    }
+       #    prior.prob.list<-list()
+       #    posi.log.pro.list<-list()
+       #    nega.log.pro.list<-list()
+       # 
+       #    for(pp in 1:100){
+       #      top.index<-order(prior.prob,decreasing = T)[1:pp]
+       #      if((poisson.prior(pp)-(sum(log(1-prior.prob[-top.index]))+sum(log(prior.prob[top.index]))))>0){
+       #        posi.log.pro.list[[pp]]<-log(prior.prob)
+       #        nega.log.pro.list[[pp]]<-log(1-prior.prob)
+       #      }else{
+       #        balance.value<-(poisson.prior(pp)-(sum(log(1-prior.prob[-top.index]))+sum(log(prior.prob[top.index]))))/p
+       #        balance.value<-exp(balance.value)
+       #        prior.prob.list[[pp]]<-1-balance.value+balance.value* prior.prob
+       #        prior.prob.list[[pp]][top.index]<-balance.value* prior.prob[top.index]
+       #        posi.log.pro.list[[pp]]<-log(prior.prob.list[[pp]])
+       #        nega.log.pro.list[[pp]]<-log(1-prior.prob.list[[pp]])
+       #        print(prior.prob.list[[pp]][1:2])
+       #      }
+       #    }
+       #    
+       #    prob.list[[1]]<-posi.log.pro.list
+       #    prob.list[[2]]<-nega.log.pro.list
+       #    prob.list[[3]]<-prior.prob
+       #    
+       #    
+       #    input.prior.dist<-function(x){
+       #      variable.index<-which(x==1)
+       #      pp<-length(variable.index)
+       #      if(any(variable.index)){
+       #        return( sum((nega.log.pro.list[[pp]][-variable.index]))+sum(( posi.log.pro.list[[pp]][variable.index])))
+       #      }else{
+       #        return(poisson.prior(0))
+       #      }
+       #    }
+       #    prior.dist<-input.prior.dist
+       #  }
+          if(model.prior=='input.prob'){
+            posi.log.pro<-log(prior.prob)
+            nega.log.pro<-log(1-prior.prob) 
+            input.prior.dist<-function(x){
+              variable.index<-which(x==1)
+              if(any(variable.index)){
+                return( sum(posi.log.pro[variable.index])+sum(nega.log.pro[(1:p)[-variable.index]]))
+              }else{
+                return(sum(nega.log.pro))
+              }
+            }
+            prior.dist<-input.prior.dist
+          }
        
       
        if(model.prior=='Poisson'){
@@ -315,7 +307,9 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
          if(effect.size.prior=='Hyper-g'){
            marginal_likelihood=hyper_g_fixed_sigma_marginal
          }
-      
+         if(effect.size.prior=='Normal'){
+           marginal_likelihood=Normal_fixed_sigma_marginal
+         }
       
       p<-nrow(z);
       log.2pi<-log(2*pi)
@@ -324,6 +318,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       stored.result.prob<-rep(0,p)
       stored.bf<-0
       Sigma<-as.matrix(ld.matrix)
+      
       #########
       if(!is.null(input.S)){
         S<-input.S
@@ -346,18 +341,15 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
            conditional.S=NULL
          }else{
            conditional.S.list<-input.conditional.S.list
-           conditional.S<-c()
-           for(t in 1:length(conditional.S.list)){
-             conditional.S<-c(conditional.S,conditional.S.list[[t]]$Index)
-           }
+           conditional.S<-input.conditional.S.list$Index
            conditional.S<-unique(conditional.S)
            S<-conditional.S
          }
     }
     
   
-    
-     set.gamma.func<-function(input.S,condition.index=NULL){
+  
+    set.gamma.func<-function(input.S,condition.index=NULL){
        set.gamma.func.base<-function(S){
          add.function<-function(y){results<-(apply(as.matrix(S_sub),1,function(x){return(sort(c(x,y)))}))
          return(t(results))
@@ -454,8 +446,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       }
       return(results)
     }
-   
-    
     duplicated.dgCMatrix <- function (dgCMat, MARGIN) {
       MARGIN <- as.integer(MARGIN)
       n <- nrow(dgCMat)
@@ -527,8 +517,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       return(result)
       
     }
-    
-    
     PIP.func<-function(likeli,model.space){
       infi.index<-which(is.infinite(likeli))
       if(length(infi.index)!=0){
@@ -576,12 +564,22 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
          result.m<-index.fun.inner(outer.x)
      }
     return(result.m)
-     }
+    }
+    ridge.fun<-function(x){
+      temp.ld.S<-x*modi.ld.S+(1-x)*diag(nrow(modi.ld.S))
+      temp.Sigma[test.S,test.S]<-temp.ld.S
+      return( marginal_likelihood(test.S,temp.Sigma,z,tau.sample,length(test.S),1) )
+    }
+    
     ######################################################
     for(l in 1:inner.all.iter){
       for(h in 1:10){
         ##############COMPUTATION ############
         { 
+         #conditional.S<-NULL;S<-928
+          #S<-c(133,924,1359);S<-unique(c(S,conditional.S))
+          #conditional.S<-conditional.S[-8]
+          
           set.gamma<-set.gamma.func(S,conditional.S)  
           if(is.null(conditional.S)){
             working.S=S
@@ -623,7 +621,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
               }else{
                 computed.index<-match.dgCMatrix(C.list[[2]][[ncol(set.gamma[[i]])]],matrix.gamma[[i]])
               }
-              
               
               p_S=dim(set.gamma[[i]])[2]
               if(length(na.omit(computed.index))==0){
@@ -737,7 +734,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                 }
                 C.list[[1]][[ncol(set.gamma[[i]])]]<-c(C.list[[1]][[ncol(set.gamma[[i]])]],set.gamma.margin[[i]][is.na(computed.index)])
                 C.list[[2]][[ncol(set.gamma[[i]])]]<-rbind(C.list[[2]][[ncol(set.gamma[[i]])]],matrix.gamma[[i]][is.na(computed.index),,drop=F])
-                set.gamma.margin[[i]]<- set.gamma.margin[[i]]+apply(matrix.gamma[[i]],1,prior.dist)
+                set.gamma.margin[[i]]<- set.gamma.margin[[i]]+ apply(matrix.gamma[[i]],1,prior.dist)
               }
             }
             
@@ -770,6 +767,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
           B.list[[2]]<-B.list[[2]][order(B.list[[1]],decreasing = T),]
           B.list[[1]]<-B.list[[1]][order(B.list[[1]],decreasing = T)]
           ###################Select Next S###############
+          
           if(length(working.S)!=0){
             set.star<-data.frame(set.index=1:3,gamma.set.index=rep(NA,3),margin=rep(NA,3))
             for(i in 1){
@@ -782,27 +780,80 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
               set.star$margin[i]<-set.gamma.margin[[i]][  set.star$gamma.set.index[i]]
               rm(aa)
             }
+            if(outlier.switch){
             for(i in 2:length(set.gamma)){
+              repeat{
+                
               aa<-set.gamma.margin[[i]]-current.log.margin
               aa<-aa-aa[which.max(aa)]
               if(length(which(is.nan(aa)))!=0){
-                aa[which(is.nan(aa))]<-min(aa)
+                aa[which(is.nan(aa))]<-min(aa[!is.na(aa)])
               }
-              set.star$gamma.set.index[i]<-c(sample((1:length(set.gamma.margin[[i]]))[order(exp(aa),decreasing = T)[1:(floor(length(set.gamma.margin[[i]])/2))]],
-                                                    1,prob=exp(aa)[order(exp(aa),decreasing = T)[1:(floor(length(set.gamma.margin[[i]])/2))]]))
+            
+              set.star$gamma.set.index[i]<-c(sample((1:length(set.gamma.margin[[i]])),
+                                                    1,prob=exp(aa)))
               set.star$margin[i]<-set.gamma.margin[[i]][  set.star$gamma.set.index[i]]
+              
+              ########
+    
+              test.S<-set.gamma[[i]][set.star$gamma.set.index[i],]
+              
+              modi.Sigma<-Sigma
+              temp.Sigma<-Sigma
+              if(length(test.S)>1){
+              
+              modi.ld.S<- modi.Sigma[test.S,test.S]
+       
+              opizer<-optimize(ridge.fun,interval=c(0,1),maximum = F)
+              modi.ld.S<-opizer$minimum*modi.ld.S+(1-opizer$minimum)*diag(nrow(modi.ld.S)) 
+              
+              modi.Sigma[test.S,test.S]<-modi.ld.S
+              print(paste0('Outlier BF: ',marginal_likelihood(test.S,Sigma,z,tau.sample,length(test.S),1)-
+                             marginal_likelihood(test.S,modi.Sigma,z,tau.sample,length(test.S),1)))
+              test.log.BF<-marginal_likelihood(test.S,Sigma,z,tau.sample,length(test.S),1)-marginal_likelihood(test.S,modi.Sigma,z,tau.sample,length(test.S),1)
+              print(test.S)
+              print(paste0('This is xi hat: ', opizer))
+              }
+                
+              if(exp(test.log.BF)>outlier.BF.index){
+                set.gamma[[i]]<-set.gamma[[i]][-set.star$gamma.set.index[i],]
+                set.gamma.margin[[i]]<-set.gamma.margin[[i]][-set.star$gamma.set.index[i]]
+                conditional.S<-c(conditional.S,test.S[is.na(match(test.S,working.S))])
+              #  print(pro.data[test.S[is.na(match(test.S,S))],])
+                conditional.S<-unique(conditional.S)
+              }else{
+                break
+              }
+              }
+              #######
               rm(aa)
             }
-            
-            
+            }else{
+              for(i in 2:length(set.gamma)){
+                 
+                  aa<-set.gamma.margin[[i]]-current.log.margin
+                  aa<-aa-aa[which.max(aa)]
+                  if(length(which(is.nan(aa)))!=0){
+                    aa[which(is.nan(aa))]<-min(aa[!is.na(aa)])
+                  }
+                  
+                  set.star$gamma.set.index[i]<-c(sample((1:length(set.gamma.margin[[i]])),
+                                                        1,prob=exp(aa)))
+                  set.star$margin[i]<-set.gamma.margin[[i]][  set.star$gamma.set.index[i]]
+                 #######
+                rm(aa)
+              }
+            }
            print(set.star)
             ##second sample
-            aa<-set.star$margin-current.log.margin-max(set.star$margin-current.log.margin)
+          
             if(length(working.S)==num.causal){
-              aa<-aa-max(aa[c(1,3)])
-              sec.sample<-sample(c(1,3),1,prob=exp(aa)[-2] )
-              S<-set.gamma[[sec.sample]][set.star$gamma.set.index[[sec.sample]] ,]
+              set.star<-set.star[-2,]
+              aa<-set.star$margin-current.log.margin-max(set.star$margin-current.log.margin)
+              sec.sample<-sample(c(1,3),1,prob=exp(aa))
+              S<-set.gamma[[sec.sample]][set.star$gamma.set.index[[which(sec.sample==set.star$set.index)]] ,]
             }else{
+              aa<-set.star$margin-current.log.margin-max(set.star$margin-current.log.margin)
             sec.sample<-sample(1:3,1,prob=exp(aa) )
             S<-set.gamma[[sec.sample]][set.star$gamma.set.index[[sec.sample]] ,]
             }
@@ -823,91 +874,14 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                          print(set.star)
           }
           print(paste0('this is running S: ',paste0(S,collapse = ',')))
-          S<-c(S,conditional.S)
+         #S<-c(S,conditional.S)
+          S<-unique(c(S,conditional.S))
+      #  pro.data[S,]
           print(paste0('this is all S: ',paste0(S,collapse = ',')))
           #print(h)
-          }
-         if(outlier.switch){
-           
-           test.S<-set.gamma[[which.max(set.star$margin)]][set.star$gamma.set.index[[which.max(set.star$margin)]] ,]
-           
-            outlier.table<-data.frame(matrix(NA,nrow = 0,ncol=5))
-          
-          for(t in test.S){
-              
-              ss.index<-which(abs(Sigma[t,])>outlier.cor.range.threshold)
-              ss.index<-ss.index[is.na(match(ss.index,conditional.S))]
-              if(length(ss.index)>1){
-              test.SS<-ss.index
-               repeat{
-              
-                   f.ld<-as.matrix(Sigma[test.SS,test.SS])
-                   off.diag.index<-which(f.ld==1)[is.na(match(which(f.ld==1),seq(1,length(test.SS)^2,by=length(test.SS)+1)))]
-                   if(length(off.diag.index)!=0){
-                     f.ld[off.diag.index]=inner.cor.threhold
-                   }
-                  test.ld<-f.ld
-                 alt.test.ld<-matrix(inner.cor.threhold,length(test.SS),length(test.SS))
-                 diag(alt.test.ld)<-1
-                 test.z<-as.matrix(z[test.SS,])
-                 test.size<-nrow(test.z)-1
-                 vector1<-as.matrix(rep(1,nrow(test.z)-1))
-                 result.table<-data.frame(matrix(NA,nrow=length(test.SS),ncol=5))
-                 colnames(result.table)<-c('Index','Z','a','m1','B1')
-                 for(s.index in 1:nrow(test.z)){
-                   ss_inverse<-ginv(test.ld[-s.index,-s.index])
-                   a=test.z[s.index]-test.ld[s.index,-s.index,drop=F]%*%ss_inverse%*%test.z[-s.index,,drop=F]
-                   b=1-test.ld[s.index,-s.index,drop=F]%*%ss_inverse%*%vector1
-                   if(any(c(test.ld[s.index,-s.index,drop=F]%*%ss_inverse%*%vector1<0))){
-                     b=1-alt.test.ld[s.index,-s.index,drop=F]%*%solve(alt.test.ld[-s.index,-s.index])%*%vector1
-                   }
-                   m1=t(test.z[-s.index,,drop=F])%*%ss_inverse%*%vector1/(test.size+1/test.size)
-                   sigma1=1/(test.size+1/test.size)
-                   sigma0=1-test.ld[s.index,-s.index,drop=F]%*%ss_inverse%*%test.ld[-s.index,s.index,drop=F]
-                   if(sigma0<=0){
-                     sigma0=1-alt.test.ld[s.index,-s.index,drop=F]%*%solve(alt.test.ld[-s.index,-s.index])%*%alt.test.ld[-s.index,s.index,drop=F]
-                   }
-                   if(sigma0<0){
-                          sigma0=0
-                        }
-                   B1=sqrt(exp(1))*sqrt(
-                     (a-m1*b)^2/
-                       abs(b^2*sigma1+sigma0)
-                   )*exp(
-                     -(a-m1*b)^2/(2*(b^2*sigma1+sigma0))
-                   )
-                   result.table[s.index,]<-c(test.SS[s.index],test.z[s.index,],a,m1,B1)
-                 }
-                 print(result.table[which.min(result.table$B1),])
-                 if((!any(result.table$B1<outlier.threshold))){
-                   break
-                 }
-                 if(nrow(result.table)==2){
-                   outlier.table<-rbind(outlier.table,result.table[which.min(abs(result.table$Z)),])
-                   break
-                 }else{
-                         equal.index<-which(result.table$B1<outlier.threshold)
-                         drop.index<-equal.index[which.min(abs(result.table$Z[equal.index]))]
-                         print(result.table[  drop.index,])
-                         outlier.table<-rbind(outlier.table,result.table[drop.index,])
-                         test.SS<-test.SS[-drop.index]
-                 
-                 }
-                 }
-               
-             }
-           }
-            conditional.S<-c(conditional.S,outlier.table$Index)
-            if(length(outlier.table$Index)!=0){
-            conditional.S.list[[length(conditional.S.list)+1]]<-outlier.table
-            }
-            conditional.S<-unique(conditional.S)
-            S<-unique(c(S,conditional.S))
-            
+        }
         
-          }
-          
-        
+     
         }
       ######Result
     
@@ -915,12 +889,13 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       result.B.list<-list()
       if(!is.null(conditional.S)){
       all.c.index<-c()
-      for(t in 1:length(conditional.S.list)){
-        for(tt in 1:length(conditional.S.list[[t]]$Index)){
-        c.index<-(B.list[[2]]@i[(B.list[[2]]@p[conditional.S.list[[t]]$Index[tt]]+1):B.list[[2]]@p[conditional.S.list[[t]]$Index[tt]+1]])+1
-       all.c.index<-c(all.c.index,c.index)
+ 
+     
+        for(tt in conditional.S){
+          c.index<-(B.list[[2]]@i[(B.list[[2]]@p[tt]+1):B.list[[2]]@p[tt+1]])+1
+          all.c.index<-c(all.c.index,c.index)
         }
-        }
+      
       all.c.index<-unique(all.c.index)
       temp.B.list<-list()
       temp.B.list[[1]]<-B.list[[1]][-all.c.index]
@@ -934,7 +909,18 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       result.B.list[[1]]<-temp.B.list[[1]][(1:min(B,nrow(temp.B.list[[2]])))]
       result.B.list[[2]]<-temp.B.list[[2]][(1:min(B,nrow(temp.B.list[[2]]))),]
       
-      result.prob<-PIP.func(result.B.list[[1]],result.B.list[[2]])
+      if(num.causal==1){
+        single.set<-matrix(1:p,p,1)
+        single.marginal<-apply(single.set,1,marginal_likelihood,Sigma=Sigma,z=z,tau=tau.sample,p_S=p_S,y_sigma=y.var)
+        aa<-single.marginal-max(single.marginal,na.rm=T)
+        prob.sum<-sum(exp(aa))
+        result.prob<-(exp(aa))/prob.sum
+      }else{
+        result.prob<-PIP.func(result.B.list[[1]],result.B.list[[2]])
+      }
+      conditional.S.list<-data.frame(Index=conditional.S,Z=z[conditional.S,])
+      # plot(result.prob)
+      # pro.data[order(result.prob,decreasing = T)[1:10],] 
       if(!is.null(output.labels)){
         if(dir.exists(output.labels)==F ){
           dir.create(output.labels,recursive = T)
@@ -956,7 +942,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
          stored.bf<-mean(result.B.list[[1]][1:round(quantile(1:length(result.B.list[[1]]),probs = 0.25))])
        }
     }
-    return(list(result.B.list,C.list,result.prob,conditional.S.list))
+    return(list(result.B.list,C.list,result.prob,conditional.S.list,prob.list))
   }
   ######## All burning###########
   previous.result<-list()
@@ -966,34 +952,34 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
    
    all.C.list[[i]]<-Module.Cauchy.Shotgun(z.list[[i]],ld.list[[i]],epsilon=epsilon.list[[i]],inner.cor.threhold=inner.cor.threhold,
                                            Max.Model.Dim=Max.Model.Dim,lambda = lambda.list[[i]],
-                                          outlier.switch=outlier.switch,outlier.threshold=outlier.threshold,outlier.cor.range.threshold=outlier.cor.range.threshold,
+                                          outlier.switch=outlier.switch,
                                            num.causal = num.causal,y.var=y.var,
                                            label = label.list[[i]],output.labels = output.labels,
                                            effect.size.prior=effect.size.prior,model.prior=model.prior,inner.all.iter = all.inner.iter)
-
-   
    t1=Sys.time()-t0
    print(paste0('This is locus ',i,' burning time'))
    print((t1))
+  
   }
   for(g in 1:all.iter){ 
     if(outlier.switch){
       delete.list<-list()
       for(i in 1:L){
         delete.list[[i]]<-integer(0)
-        if(length(all.C.list[[i]][[4]])!=0){
-        temp.delete.list<-c()
-        for(t in 1:length(all.C.list[[i]][[4]])){
-          temp.delete.list<-c(temp.delete.list,all.C.list[[i]][[4]][[t]]$Index) 
-        }
+        if(nrow(all.C.list[[i]][[4]])!=0){
+        temp.delete.list<-c(all.C.list[[i]][[4]]$Index)
         delete.list[[i]]<-temp.delete.list
         }
       }
     }else{
-        delete.list<-list()
-        for(i in 1:L){
-          delete.list[[i]]<-all.C.list[[i]][[4]]
+      delete.list<-list()
+      for(i in 1:L){
+        delete.list[[i]]<-integer(0)
+        if(nrow(all.C.list[[i]][[4]])!=0){
+          temp.delete.list<-c(all.C.list[[i]][[4]]$Index)
+          delete.list[[i]]<-temp.delete.list
         }
+      }
     }
     if(!is.null(w.list)){
       w<-matrix(NA,nrow=0,ncol=ncol(w.list[[1]]))
@@ -1044,11 +1030,12 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
         glm.beta[1]=log((min(Max.Model.Dim,nrow(all.C.list[[i]][[1]][[2]])))*lambda.list[[i]]/(lambda.list[[i]]+p.list[[i]]))
         prior.prob.list[[i]]<-(exp(w.list[[i]]%*%glm.beta)/(max(1+max(exp(w.list[[i]]%*%glm.beta)),min(Max.Model.Dim,nrow(all.C.list[[i]][[1]][[2]])))))
         if(!is.null(output.labels)){
-        write.table((glm.beta),file=paste0(output.labels,'/post_', label.list[[i]],'_theta.txt'),row.names = F,append = F,col.names = F)
+        write.table((glm.beta),file=paste0(output.labels,'/post_', label.list[[i]],'_',g,'_theta.txt'),row.names = F,append = F,col.names = F)
         }
         plot(prior.prob.list[[i]])
       }
-      model.prior='input.prob'  
+     model.prior='input.prob'  
+    
     }else{
       model.prior='Poisson'
       prior.prob.list<-list()
@@ -1070,12 +1057,12 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       all.C.list[[i]]<-Module.Cauchy.Shotgun(z=z.list[[i]],ld.list[[i]],input.conditional.S.list = all.C.list[[i]][[4]],inner.cor.threhold=inner.cor.threhold,
                                              Max.Model.Dim=Max.Model.Dim,y.var=y.var,num.causal = num.causal,epsilon=epsilon.list[[i]],
                                              C.list = all.C.list[[i]][[2]],prior.prob = prior.prob.list[[i]],
-                                             outlier.switch=outlier.switch,outlier.threshold=outlier.threshold,outlier.cor.range.threshold=outlier.cor.range.threshold,
-                                             lambda = lambda.list[[i]],
-                                             label = label.list[[i]],output.labels = output.labels,
+                                             outlier.switch=outlier.switch,
+                                             lambda = lambda.list[[i]], label = label.list[[i]],output.labels = output.labels,
                                              effect.size.prior=effect.size.prior,model.prior=model.prior,inner.all.iter = all.inner.iter)
       t1=Sys.time()-t0
       print(paste0('This is locus ',i,' computing time'))
+      saveRDS(all.C.list[[i]][[5]],file=paste0(output.labels,'/post_', label.list[[i]],'_',g,'_prior_prob_list.RData'))
       print((t1))
     }
    #  plot(previous.result[[i]])
@@ -1099,12 +1086,10 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     results.list[[i]][[1]]<-pip
     results.list[[i]][[2]]<-credible.set
     results.list[[i]][[3]]<-credible.model
-    if(outlier.switch ){
+   
       results.list[[i]][[4]]<-all.C.list[[i]][[4]]
       names(results.list[[i]])<-c('PIPs','Credible set','Credible model','Outliers')
-    }else{
-      names(results.list[[i]])<-c('PIPs','Credible set','Credible model')
-    }
     }
   return(results.list)
 }
+

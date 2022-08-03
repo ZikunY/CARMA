@@ -18,7 +18,8 @@ CARMA(
   label.list = NULL,
   output.labels = NULL,
   input.alpha = 0.5,
-  epsilon.threshold = 0.001
+  epsilon.threshold = 0.001,
+  input.prior.prob = NULL
 )
 }
 \arguments{

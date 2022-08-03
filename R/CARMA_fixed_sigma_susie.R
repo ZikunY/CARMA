@@ -50,7 +50,7 @@
 #'lambda.list[[1]]<-1/sqrt(p)
 #'CARMA.result<-CARMA_fixed_sigma(z.list,ld.list=ld.list,
 #'lambda.list = lambda.list,effect.size.prior='Hyper-g')
-CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels=NULL,label.list=NULL,
+CARMA_fixed_sigma_susie<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels=NULL,label.list=NULL,studies.list=NULL,consistent.study=NULL,Nsum.list=NULL,
                                  effect.size.prior='Cauchy',rho.index=0.99,BF.index=10,inner.cor.threhold=0.999999999,
                                 Max.Model.Dim=1e+4,all.iter=10,all.inner.iter=10,input.alpha=0.5,epsilon.threshold=1e-3,
                                  num.causal=10,y.var=1,outlier.switch=T,outlier.threshold=1e-3,outlier.cor.range.threshold=0.9){
@@ -255,7 +255,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
 
 #########Module model##########
   
-  Module.Cauchy.Shotgun<-function(z,ld.matrix,Max.Model.Dim=1e+4,input.S=NULL,lambda,label,inner.cor.threhold=0.999999999,
+  Module.Cauchy.Shotgun<-function(z,ld.matrix,Max.Model.Dim=1e+4,input.S=NULL,lambda,label,inner.cor.threhold=0.999999999,study,consistent.study,Nsum,
                                               num.causal=10,output.labels,y.var=1,effect.size.prior=effect.size.prior,model.prior=model.prior,
                                               outlier.switch,outlier.cor.range.threshold,outlier.threshold=1e-3,input.conditional.S.list=NULL,
                                               C.list=NULL,prior.prob=NULL,epsilon=1e-3,inner.all.iter=10){
@@ -830,81 +830,107 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
          if(outlier.switch){
            
            test.S<-set.gamma[[which.max(set.star$margin)]][set.star$gamma.set.index[[which.max(set.star$margin)]] ,]
+           outlier.table<-data.frame(matrix(NA,nrow = 0,ncol=5))
+           colnames(outlier.table)<-c('Index','Z','a','m1','B1')
            
-            outlier.table<-data.frame(matrix(NA,nrow = 0,ncol=5))
-          
-          for(t in test.S){
-              
-              ss.index<-which(abs(Sigma[t,])>outlier.cor.range.threshold)
-              ss.index<-ss.index[is.na(match(ss.index,conditional.S))]
-              if(length(ss.index)>1){
-              test.SS<-ss.index
-               repeat{
-              
-                   f.ld<-as.matrix(Sigma[test.SS,test.SS])
-                   off.diag.index<-which(f.ld==1)[is.na(match(which(f.ld==1),seq(1,length(test.SS)^2,by=length(test.SS)+1)))]
-                   if(length(off.diag.index)!=0){
-                     f.ld[off.diag.index]=inner.cor.threhold
-                   }
-                  test.ld<-f.ld
-                 alt.test.ld<-matrix(inner.cor.threhold,length(test.SS),length(test.SS))
-                 diag(alt.test.ld)<-1
-                 test.z<-as.matrix(z[test.SS,])
-                 test.size<-nrow(test.z)-1
-                 vector1<-as.matrix(rep(1,nrow(test.z)-1))
-                 result.table<-data.frame(matrix(NA,nrow=length(test.SS),ncol=5))
-                 colnames(result.table)<-c('Index','Z','a','m1','B1')
-                 for(s.index in 1:nrow(test.z)){
-                   ss_inverse<-ginv(test.ld[-s.index,-s.index])
-                   a=test.z[s.index]-test.ld[s.index,-s.index,drop=F]%*%ss_inverse%*%test.z[-s.index,,drop=F]
-                   b=1-test.ld[s.index,-s.index,drop=F]%*%ss_inverse%*%vector1
-                   if(any(c(test.ld[s.index,-s.index,drop=F]%*%ss_inverse%*%vector1<0))){
-                     b=1-alt.test.ld[s.index,-s.index,drop=F]%*%solve(alt.test.ld[-s.index,-s.index])%*%vector1
-                   }
-                   m1=t(test.z[-s.index,,drop=F])%*%ss_inverse%*%vector1/(test.size+1/test.size)
-                   sigma1=1/(test.size+1/test.size)
-                   sigma0=1-test.ld[s.index,-s.index,drop=F]%*%ss_inverse%*%test.ld[-s.index,s.index,drop=F]
-                   if(sigma0<=0){
-                     sigma0=1-alt.test.ld[s.index,-s.index,drop=F]%*%solve(alt.test.ld[-s.index,-s.index])%*%alt.test.ld[-s.index,s.index,drop=F]
-                   }
-                   if(sigma0<0){
-                          sigma0=0
-                        }
-                   B1=sqrt(exp(1))*sqrt(
-                     (a-m1*b)^2/
-                       abs(b^2*sigma1+sigma0)
-                   )*exp(
-                     -(a-m1*b)^2/(2*(b^2*sigma1+sigma0))
-                   )
-                   result.table[s.index,]<-c(test.SS[s.index],test.z[s.index,],a,m1,B1)
-                 }
-                 print(result.table[which.min(result.table$B1),])
-                 if((!any(result.table$B1<outlier.threshold))){
-                   break
-                 }
-                 if(nrow(result.table)==2){
-                   outlier.table<-rbind(outlier.table,result.table[which.min(abs(result.table$Z)),])
-                   break
-                 }else{
-                         equal.index<-which(result.table$B1<outlier.threshold)
-                         drop.index<-equal.index[which.min(abs(result.table$Z[equal.index]))]
-                         print(result.table[  drop.index,])
-                         outlier.table<-rbind(outlier.table,result.table[drop.index,])
-                         test.SS<-test.SS[-drop.index]
-                 
-                 }
-                 }
+      
+           
+           for(t in test.S){
+             
+             ss.index<-which(abs(Sigma[t,])>outlier.cor.range.threshold)
+             ss.index<-ss.index[is.na(match(ss.index,conditional.S))]
+             if(length(ss.index)>1){
+               test.SS<-ss.index
+               test.z<-as.matrix(z[test.SS,])
+               test.ld<-as.matrix(Sigma[test.SS,test.SS])
+               test.study<-study[test.SS]
+               test.Nsum<-Nsum[test.SS]
                
-             }
+               # test.z<-as.matrix(test.data$Z)
+               # test.study<-as.numeric(factor(dir.level))
+               # test.Nsum<-test.data$Nsum
+               # test.SS<-as.numeric(row.names(test.data))
+                base.index<-which(test.study==consistent.study)
+               
+               start.base.susie<-base.susie<-susie_suff_stat(bhat =test.z[base.index,],
+                                           shat = rep(1,length(base.index)),
+                                           R=test.ld[base.index,base.index],
+                                           n=mean(test.Nsum[base.index]))
+               
+               add.study<-unique(test.study)[-which(unique(test.study)==consistent.study)]
+               repeat{
+                 study.bf<-c()
+                 for(s in add.study){
+                   
+                   fur.index<-c(base.index,which(test.study==s))
+                   fur.susie<-susie_suff_stat(bhat =test.z[fur.index,],
+                                               shat = rep(1,length(fur.index)),
+                                               R=test.ld[fur.index,fur.index],
+                                               n=mean(test.Nsum[fur.index]))
+                   study.bf<-c(study.bf,sum(fur.susie$lbf)-sum(base.susie$lbf))
+                   print(paste0('Diff of lbf_susie: ',sum(fur.susie$lbf)-sum(base.susie$lbf)))
+                 }
+                 if(any(abs(study.bf)<10)){
+                   add.index<-base.index
+                   for(s in add.study[which(abs(study.bf)<10)]){
+                     add.index<-c(add.index,which(test.study==s))
+                     # add.susie<-susie_suff_stat(bhat =test.z[add.index,],
+                     #                            shat = rep(1,length(add.index)),
+                     #                            R=test.ld[add.index,add.index],
+                     #                            n=mean(test.Nsum[add.index]))
+                   }
+                   add.study<-add.study[-which(abs(study.bf)<10)]
+                   base.index<-add.index
+                   base.susie<-susie_suff_stat(bhat =test.z[base.index,],
+                                               shat = rep(1,length(base.index)),
+                                               R=test.ld[base.index,base.index],
+                                               n=mean(test.Nsum[base.index]))
+                 }else{
+                  for(s in add.study){
+                    indi.study.bf<-c()
+                    
+                    for(ss in which(test.study==s)){
+                      fur.index<-c(base.index,ss)
+                      fur.susie<-susie_suff_stat(bhat =test.z[fur.index,],
+                                                 shat = rep(1,length(fur.index)),
+                                                 R=test.ld[fur.index,fur.index],
+                                                 n=mean(test.Nsum[fur.index]))
+                      indi.study.bf<-c(indi.study.bf,sum(fur.susie$lbf)-sum(base.susie$lbf))
+                      print(paste0('Diff of lbf_susie: ',sum(fur.susie$lbf)-sum(base.susie$lbf)))
+                    }
+                    base.index<-c(base.index,which(test.study==s)[which(abs(indi.study.bf)<1)])
+                    base.susie<-susie_suff_stat(bhat =test.z[base.index,],
+                                                shat = rep(1,length(base.index)),
+                                                R=test.ld[base.index,base.index],
+                                                n=mean(test.Nsum[base.index]))
+                  }
+                  add.study<-add.study[-which(abs(study.bf)>10)] 
+                 }
+                 if(length(add.study)==0){
+                   final.base.susie<-susie_suff_stat(bhat =test.z[base.index,],
+                                               shat = rep(1,length(base.index)),
+                                               R=test.ld[base.index,base.index],
+                                               n=mean(test.Nsum[base.index]))
+                   break
+                 }
+               }
+               if(length(base.index)<nrow(test.ld)){
+                 outlier.index<-test.SS[-base.index]
+                 result.table<-data.frame(matrix(NA,nrow=length(outlier.index),ncol=5))
+                 colnames(result.table)<-c('Index','Z','a','m1','B1')
+                 result.table$Index<-outlier.index
+                 result.table$Z<-z[outlier.index,]
+               }
+               outlier.table<-rbind(outlier.table,result.table)
+              }
            }
-            conditional.S<-c(conditional.S,outlier.table$Index)
-            if(length(outlier.table$Index)!=0){
-            conditional.S.list[[length(conditional.S.list)+1]]<-outlier.table
-            }
-            conditional.S<-unique(conditional.S)
-            S<-unique(c(S,conditional.S))
-            
-        
+           conditional.S<-c(conditional.S,outlier.table$Index)
+           if(length(outlier.table$Index)!=0){
+             conditional.S.list[[length(conditional.S.list)+1]]<-outlier.table
+           }
+           conditional.S<-unique(conditional.S)
+           S<-unique(c(S,conditional.S))
+           
           }
           
         
@@ -965,6 +991,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     t0=Sys.time()
    
    all.C.list[[i]]<-Module.Cauchy.Shotgun(z.list[[i]],ld.list[[i]],epsilon=epsilon.list[[i]],inner.cor.threhold=inner.cor.threhold,
+                                          study=studies.list[[i]],consistent.study=consistent.study,Nsum=Nsum.list[[i]],
                                            Max.Model.Dim=Max.Model.Dim,lambda = lambda.list[[i]],
                                           outlier.switch=outlier.switch,outlier.threshold=outlier.threshold,outlier.cor.range.threshold=outlier.cor.range.threshold,
                                            num.causal = num.causal,y.var=y.var,
@@ -1068,6 +1095,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     for(i in 1:L){
       t0=Sys.time()
       all.C.list[[i]]<-Module.Cauchy.Shotgun(z=z.list[[i]],ld.list[[i]],input.conditional.S.list = all.C.list[[i]][[4]],inner.cor.threhold=inner.cor.threhold,
+                                             study=studies.list[[i]],consistent.study=consistent.study,Nsum=Nsum.list[[i]],
                                              Max.Model.Dim=Max.Model.Dim,y.var=y.var,num.causal = num.causal,epsilon=epsilon.list[[i]],
                                              C.list = all.C.list[[i]][[2]],prior.prob = prior.prob.list[[i]],
                                              outlier.switch=outlier.switch,outlier.threshold=outlier.threshold,outlier.cor.range.threshold=outlier.cor.range.threshold,
@@ -1108,3 +1136,30 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     }
   return(results.list)
 }
+
+
+
+#############
+# z.list<-list()
+# ld.list<-list()
+# Nsum.list<-list()
+# study.list<-list()
+# z.list[[1]]<-pro.data$Z
+# ld.list[[1]]<-ld
+# Nsum.list[[1]]<-pro.data$Nsum
+# dir<-pro.data$dir
+# dir.level<-rep('',length(dir))
+# for(p in 1:4){
+#   cu.dir<-substr(dir,p,p)
+#   cu.dir[which(cu.dir=='-')]<-'+'
+#   dir.level<-paste0(dir.level,cu.dir)
+# }
+# study.list[[1]]<-as.numeric(factor(dir.level))
+# 
+# cbind(pro.data[,5:11],study.list[[1]])
+# library(CARMA)
+# a<-CARMA_fixed_sigma_susie(z.list = z.list,ld.list=ld.list,studies.list = study.list,
+#                            consistent.study = 7,Nsum.list = Nsum.list,effect.size.prior = 'Hyper-g',outlier.cor.range.threshold = 0.5)
+# unique(dir.level)
+# table(dir.level)
+

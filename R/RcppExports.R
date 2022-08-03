@@ -5,7 +5,7 @@
 #'@title Marginal likelihood of Cauchy prior
 NULL
 
-#'@return marginal likelihood
+#'@return marginal likelihood 
 NULL
 
 Cauchy_marginal <- function(index_vec_input, Sigma, z, zSigmaz, tau, p, p_S) {
@@ -43,5 +43,27 @@ NULL
 
 hyper_g_fixed_sigma_marginal <- function(index_vec_input, Sigma, z, tau, p_S, y_sigma) {
     .Call(`_CARMA_hyper_g_fixed_sigma_marginal`, index_vec_input, Sigma, z, tau, p_S, y_sigma)
+}
+
+#'@name Normal_marginal
+#'@title Marginal likelihood of Normal prior
+NULL
+
+#'@return marginal likelihood
+NULL
+
+Normal_marginal <- function(index_vec_input, Sigma, z, zSigmaz, tau, p, p_S) {
+    .Call(`_CARMA_Normal_marginal`, index_vec_input, Sigma, z, zSigmaz, tau, p, p_S)
+}
+
+#'@name Normal_fixed_sigma_marginal
+#'@title Marginal likelihood of Normal prior when varinace is fixed
+NULL
+
+#'@return marginal likelihood
+NULL
+
+Normal_fixed_sigma_marginal <- function(index_vec_input, Sigma, z, tau, p_S, y_sigma) {
+    .Call(`_CARMA_Normal_fixed_sigma_marginal`, index_vec_input, Sigma, z, tau, p_S, y_sigma)
 }
 
