@@ -14,7 +14,7 @@ We propose a novel Bayesian model, CARMA (CAusal Robust mapping method in Meta-A
 Vignettes can be found at [https://github.com/ZikunY/CARMA/blob/master/CARMA_demo.pdf].
 
 ### Package manual
-The manual can be found at [https://github.com/ZikunY/CARMA/blob/master/CARMA_1.0.pdf].
+The manual can be found at [https://github.com/ZikunY/CARMA/blob/master/CARMA.pdf].
 
 ### Installation
 ```r
