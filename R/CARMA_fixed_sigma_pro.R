@@ -9,15 +9,14 @@
 #'@param w.list Input list of the functional annotations of the testing loci, and each element of the list is the functional annotation matrix of each individual locus.
 #'@param lambda.list Input list of the hyper-parameter \eqn{\eta} of the testing loci, and each element of the list is the hyper-parameter of each individual locus.
 #'@param label.list Input list of the names of the testing loci. Default is NULL. 
-#'@param effect.size.prior The prior of the effect size. The choice are 'Cauchy' and 'Hyper-g' priors, where the Cauchy prior is the default prior.
+#'@param effect.size.prior The prior of the effect size. The choice are 'Cauchy', 'Hyper-g', and 'Normal' priors, where the Cauchy prior is the default prior.
 #'@param input.alpha The elastic net mixing parameter, where \eqn{0\le}\eqn{\alpha}\eqn{\le 1}.
 #'@param y.var The input variance of the summary statistics, the default value is 1 as the summary statistics are standardized. 
 #'@param rho.index A number between 0 and 1 specifying \eqn{\rho} of the estimated credible sets.
 #'@param BF.index  A number greater than 1 to specifying the threshold of the Bayes factor of the estimated credible models.
-#'@param outlier.switch The indicator variable of whether turn on the outlier detection. We suggest that the detection should always turn on. 
-#'@param outlier.threshold The Bayes threshold of the hypothesis testing of determining outliers.
-#'@param outlier.cor.range.threshold The correlation threshold of defining the highly correlated group, within which the outlier detection run.
-#'@param num.causal The maximum number of causal variants assumed per locus.
+#'@param outlier.switch The indicator variable of whether turn on the outlier detection. We suggest that the detection should always turn on if using external LD matrix. 
+#'@param outlier.threshold The Bayes threshold of the hypothesis testing of determining outliers, which is 10 by default.
+#'@param num.causal The maximum number of causal variants assumed per locus, which is 10 causal SNPs per locus by default.
 #'@param Max.Model.Dim Maximum number of the top candidate models based on the unnormalized posterior probability. 
 #'@param all.inner.iter Maximum iterations for Shotgun algorithm to run per iteration within EM algorithm.
 #'@param all.iter Maximum iterations for EM algorithm to run.
@@ -28,7 +27,7 @@
 #'\item pip - The posterior inclusion probability of each individual locus.
 #'\item Credibleset - The information regarding the credible set given a threshold \eqn{\rho}.
 #'\item Credible model - The information regarding the credible model given a threshold  of the Bayes factor.
-#'\item Outliers - The information regarding the detected outliers and the corresponding testing statistics of each detected outliers.
+#'\item Outliers - The information regarding the detected outliers.
 #'}
 #'@details The function performs a Bayesian fine-mapping method. 
 #'@examples 

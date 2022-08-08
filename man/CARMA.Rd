@@ -31,7 +31,7 @@ CARMA(
 
 \item{lambda.list}{Input list of the hyper-parameter \eqn{\eta} of the testing loci, and each element of the list is the hyper-parameter of each individual locus.}
 
-\item{effect.size.prior}{The prior of the effect size. The choice are 'Cauchy' and 'Hyper-g' priors, where the Cauchy prior is the default prior.}
+\item{effect.size.prior}{The prior of the effect size. The choice are 'Cauchy', 'Hyper-g', and 'Normal' priors, where the Cauchy prior is the default prior.}
 
 \item{rho.index}{A number between 0 and 1 specifying \eqn{\rho} of the estimated credible sets.}
 
@@ -55,7 +55,7 @@ CARMA(
 The form of the return is a list, for each list:
 \itemize{
 \item pip - The posterior inclusion probability of each individual locus.
-\item Credibleset - The information regarding the credible set given a threshold \eqn{\rho}.
+\item Credible set - The information regarding the credible set given a threshold \eqn{\rho}.
 \item Credible model - The information regarding the credible model given a threshold  of the Bayes factor.
 }
 }
