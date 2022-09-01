@@ -27,11 +27,11 @@ devtools::install_github("ZikunY/CARMA")
 library("CARMA")
 ```
 
-First, download the example datasets from GitHub repository ZikunY/CARMA. The directory path of the demo data should be under the repo folder of the git clone unless the user setwd to the git clone directory. 
+First, create a folder `CARMA' (or any other folder that will store the demo data), then download the example datasets on OSF through command wget. 
 
 ```{bash, eval=F}
-git clone https://github.com/ZikunY/CARMA.git
-cd CARMA 
+mkdir CARMA
+cd CARMA
 ##### Download and save the demo data in folder `CARMA'
 wget -O Sample_data.tar.gz https://osf.io/5gqz8/download  
 ##### or download the file from https://osf.io/4t2bz/
@@ -58,8 +58,6 @@ library(data.table)
 library(magrittr)
 library(dplyr)
 library(devtools)
-install_github("ZikunY/CARMA")
-library(CARMA)
 ##### setting up the working directory or the wd where the data are stored
 setwd('CARMA')
 ###### load the GWAS summary statistics
