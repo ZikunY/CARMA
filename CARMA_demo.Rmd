@@ -57,6 +57,9 @@ We run CARMA without annotations first. The input format of CARMA is the list cl
 library(data.table)
 library(magrittr)
 library(dplyr)
+library(devtools)
+install_github("ZikunY/CARMA")
+library(CARMA)
 ##### setting up the working directory or the wd where the data are stored
 setwd('CARMA')
 ###### load the GWAS summary statistics
