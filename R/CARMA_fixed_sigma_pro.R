@@ -49,7 +49,7 @@
 #'lambda.list[[1]]<-1/sqrt(p)
 #'CARMA.result<-CARMA_fixed_sigma(z.list,ld.list=ld.list,
 #'lambda.list = lambda.list,effect.size.prior='Hyper-g')
-CARMA_fixed_sigma_pro<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels=NULL,label.list=NULL,
+CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels=NULL,label.list=NULL,
                                  effect.size.prior='Cauchy',rho.index=0.99,BF.index=10,
                                 Max.Model.Dim=1e+4,all.iter=10,all.inner.iter=10,input.alpha=0.5,epsilon.threshold=1e-3,
                                  num.causal=10,y.var=1,outlier.switch=T,outlier.BF.index=10){
@@ -1085,9 +1085,9 @@ CARMA_fixed_sigma_pro<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,outp
     results.list[[i]][[1]]<-pip
     results.list[[i]][[2]]<-credible.set
     results.list[[i]][[3]]<-credible.model
-   
-      results.list[[i]][[4]]<-all.C.list[[i]][[4]]
-      names(results.list[[i]])<-c('PIPs','Credible set','Credible model','Outliers')
+    results.list[[i]][[4]]<-all.C.list[[i]][[4]]
+    names(results.list[[i]])<-c('PIPs','Credible set','Credible model','Outliers')
+    
     }
   return(results.list)
 }
