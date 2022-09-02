@@ -93,7 +93,7 @@ The input data `sumstat' are typical results of GWAS with summary statistics, su
 ```{r,eval=T, echo=FALSE}
 library(data.table)
 options(digits=2)
-sumstat<- fread(file = "/Users/zikunyang/Sample_data/sumstats_chr1_200937832_201937832.txt.gz", 
+sumstat<- fread(file = "/Users/liam/CARMA/Sample_data/sumstats_chr1_200937832_201937832.txt.gz", 
                            sep = "\t", header = T, check.names = F, data.table = F,
                            stringsAsFactors = F)
 print(head(sumstat))
@@ -178,7 +178,7 @@ We can observe that the $287$th SNP (the causal SNP at left), which is a true ca
 CARMA.results[[1]]$`Credible set`[[2]]
 CARMA.results[[1]]$`Credible model`[[3]]
 ```
-Due to relatively weak signal strength, none of the signals have enough PIPs to formulate credible sets. On the other hand, credible model still identified 22 candidate SNPs, which include all three true causal SNPs.
+Due to relatively weak signal strength, none of the signals have enough PIPs to formulate credible sets. On the other hand, credible model still identified 22 candidate SNPs, which include all three true causal SNPs. Notice that the PIPs shown above might not be able to be exactly replicated due to the setting of different seeds, however, the conclusion is the same as there are two causal variants that are indistinguishable to the other highly correlated non-causal SNPs. 
 
 #### Running CARMA with annotations
 We can include functional annotations into CARMA:
