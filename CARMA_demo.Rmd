@@ -44,7 +44,7 @@ tar -zxf Sample_data.tar.gz
 Check if the following packages are installed, which will be used in this tutorial. 
 
 ```{r echo=T, eval=FALSE}
-pkgs = c("data.table", "magrittr", "dplyr", "devtools")
+pkgs = c("data.table", "magrittr", "dplyr", "devtools","R.utlis")
 pkgs.na = pkgs[!pkgs %in% installed.packages()[, "Package"]]
 if (length(pkgs.na) > 0) {
   install.packages(pkgs.na)
@@ -74,6 +74,7 @@ library(data.table)
 library(magrittr)
 library(dplyr)
 library(devtools)
+library(R.utils)
 ##### setting up the working directory or the wd where the data are stored
 setwd('CARMA')
 ###### load the GWAS summary statistics

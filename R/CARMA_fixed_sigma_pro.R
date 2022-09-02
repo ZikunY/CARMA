@@ -51,7 +51,7 @@
 #'lambda.list = lambda.list,effect.size.prior='Hyper-g')
 CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',label.list=NULL,
                                  effect.size.prior='Cauchy',rho.index=0.99,BF.index=10,
-                                Max.Model.Dim=1e+4,all.iter=10,all.inner.iter=10,input.alpha=0.5,epsilon.threshold=1e-3,
+                                Max.Model.Dim=2e+4,all.iter=10,all.inner.iter=10,input.alpha=0.5,epsilon.threshold=1e-3,
                                  num.causal=10,y.var=1,outlier.switch=T,outlier.BF.index=10){
   EM.M.step.func<-function(Model.space=NULL,w=w,input.alpha=0.5){
       count.index<-Model.space
@@ -1031,7 +1031,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
         if(!is.null(output.labels)){
         write.table((glm.beta),file=paste0(output.labels,'/post_', label.list[[i]],'_theta.txt'),row.names = F,append = F,col.names = F)
         }
-        plot(prior.prob.list[[i]])
+     #   plot(prior.prob.list[[i]])
       }
      model.prior='input.prob'  
     
