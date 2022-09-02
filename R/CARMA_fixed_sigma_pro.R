@@ -174,8 +174,17 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     q.list<-list()
     if(!is.null(w.list)){
       for(i in 1:L){
-      q.list[[i]]<-ncol(w.list[[i]])
-      w.list[[i]]<-as.matrix(cbind(1,scale(w.list[[i]][,-1])))
+        
+        q.list[[i]]<-ncol(w.list[[i]])
+        invariant.var.index<-which((apply(w.list[[i]][,-1],2,sd))==0)
+        if(length(invariant.var.index)!=0){
+          invariant.var<-w.list[[i]][,invariant.var.index+1]
+          w.list[[i]]<-as.matrix(cbind(1,scale(w.list[[i]][,-1])))
+          w.list[[i]][,invariant.var.index+1]<-invariant.var
+        }else{
+          w.list[[i]]<-as.matrix(cbind(1,scale(w.list[[i]][,-1])))
+        }
+        
       }
     }
     if(is.null(label.list)){
@@ -872,7 +881,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                          S<-set.gamma[[2]][set.star$gamma.set.index[2],]
                          print(set.star)
           }
-        #  print(paste0('this is running S: ',paste0(S,collapse = ',')))
+          print(paste0('this is running S: ',paste0(S,collapse = ',')))
          #S<-c(S,conditional.S)
           S<-unique(c(S,conditional.S))
       #  pro.data[S,]
