@@ -47,7 +47,7 @@
 CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list,
                                  effect.size.prior='Cauchy',rho.index=0.99,BF.index=10,
                                  Max.Model.Dim=2e+4,all.iter=10,all.inner.iter=10,label.list=NULL,
-                                output.labels='.',input.alpha=0.5,epsilon.threshold=1e-3,input.prior.prob=NULL){
+                                output.labels='.',input.alpha=0,epsilon.threshold=1e-3,input.prior.prob=NULL){
                                       
   Sys.setenv("PKG_CXXFLAGS"="-std=c++11")    
   EM.M.step.func<-function(Model.space=NULL,w=w,input.alpha=0.5){

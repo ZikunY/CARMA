@@ -339,7 +339,8 @@ CARMA.results_no_annot<-CARMA_fixed_sigma(z.list,ld.list,lambda.list =  lambda.l
 annot.list<-list()
 annot.list[[1]]<-as.matrix(cbind(1, annot.1 %>% select(-(uniqID.a1a2:SNP))))
 annot.list[[2]]<-as.matrix(cbind(1, annot.2 %>% select(-(uniqID.a1a2:SNP))))
-CARMA.results_annot<-CARMA_fixed_sigma(z.list,ld.list,w.list=annot.list,lambda.list =  lambda.list)
+
+CARMA.results_annot<-CARMA_fixed_sigma(z.list,ld.list,w.list=annot.list,lambda.list =  lambda.list,input.alpha=0)
  
 ###### Posterior inclusion probability (PIP) and credible set (CS)
 sumstat.1 = sumstat.1 %>% mutate(PIP = CARMA.results_annot[[1]]$PIPs, CS = 0)
