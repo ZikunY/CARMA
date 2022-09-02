@@ -15,7 +15,7 @@
 #'@param Max.Model.Dim Maximum number of the top candidate models based on the unnormalized posterior probability. 
 #'@param all.inner.iter Maximum iterations for Shotgun algorithm to run per iteration within EM algorithm.
 #'@param all.iter Maximum iterations for EM algorithm to run.
-#'@param output.labels Output directory where output will be written while CARMA is running. Default is NULL.
+#'@param output.labels Output directory where output will be written while CARMA is running. Default is the root directory '.'.
 #'@param epsilon.threshold Convergence threshold measured by average of Bayes factors.
 #'@return The form of the return is a list, for each list:
 #'\itemize{
@@ -47,22 +47,22 @@
 CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list,
                                  effect.size.prior='Cauchy',rho.index=0.99,BF.index=10,
                                  Max.Model.Dim=1e+4,all.iter=10,all.inner.iter=10,label.list=NULL,
-                                output.labels=NULL,input.alpha=0.5,epsilon.threshold=1e-3,input.prior.prob=NULL){
+                                output.labels='.',input.alpha=0.5,epsilon.threshold=1e-3,input.prior.prob=NULL){
                                       
   Sys.setenv("PKG_CXXFLAGS"="-std=c++11")    
   EM.M.step.func<-function(Model.space=NULL,w=w,input.alpha=0.5){
 
       count.index<-Model.space
-        print('this is running!!!')
+     #   print('this is running!!!')
         cv.poisson<-cv.glmnet(w,count.index,family = 'poisson',alpha=input.alpha,type.measure='deviance' )
-        print('this is running!!!')
+     #   print('this is running!!!')
         cv.index<-which(cv.poisson$lambda==cv.poisson$lambda.min)
-        print('this is running!!!')
+      #  print('this is running!!!')
         glm.beta<-as.matrix(c(cv.poisson$glmnet.fit$a0[cv.index],cv.poisson$glmnet.fit$beta[-1,cv.index]))
      
         #print(cv.index)   
     
-      print(paste0('This is starting theta: ',glm.beta[1:ifelse(length(glm.beta)>10,10,length(glm.beta)),]))
+    #  print(paste0('This is starting theta: ',glm.beta[1:ifelse(length(glm.beta)>10,10,length(glm.beta)),]))
   
     return(glm.beta=glm.beta)
   }
@@ -652,7 +652,7 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list,
             print(set.star)
           }
           
-          print(S)
+         # print(S)
           #print(h)
           
         }
@@ -675,7 +675,7 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list,
       }
       
       difference<-abs(mean(result.B.list[[1]][1:round(quantile(1:length(result.B.list[[1]]),probs = 0.25))])-stored.bf)
-      print(difference)
+  #    print(difference)
       if(difference<epsilon){
         break
       }else{

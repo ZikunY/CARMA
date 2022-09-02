@@ -20,7 +20,7 @@
 #'@param Max.Model.Dim Maximum number of the top candidate models based on the unnormalized posterior probability. 
 #'@param all.inner.iter Maximum iterations for Shotgun algorithm to run per iteration within EM algorithm.
 #'@param all.iter Maximum iterations for EM algorithm to run.
-#'@param output.labels Output directory where output will be written while CARMA is running. Default is NULL.
+#'@param output.labels Output directory where output will be written while CARMA is running. Default is the OS root directory ".".
 #'@param epsilon.threshold Convergence threshold measured by average of Bayes factors.
 #'@return The form of the return is a list, for each list:
 #'\itemize{
@@ -49,22 +49,22 @@
 #'lambda.list[[1]]<-1/sqrt(p)
 #'CARMA.result<-CARMA_fixed_sigma(z.list,ld.list=ld.list,
 #'lambda.list = lambda.list,effect.size.prior='Hyper-g')
-CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels=NULL,label.list=NULL,
+CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',label.list=NULL,
                                  effect.size.prior='Cauchy',rho.index=0.99,BF.index=10,
                                 Max.Model.Dim=1e+4,all.iter=10,all.inner.iter=10,input.alpha=0.5,epsilon.threshold=1e-3,
                                  num.causal=10,y.var=1,outlier.switch=T,outlier.BF.index=10){
   EM.M.step.func<-function(Model.space=NULL,w=w,input.alpha=0.5){
       count.index<-Model.space
-        print('this is running!!!')
+     #   print('this is running!!!')
         cv.poisson<-cv.glmnet(w,count.index,family = 'poisson',alpha=input.alpha,type.measure='deviance' )
-        print('this is running!!!')
+     #   print('this is running!!!')
         cv.index<-which(cv.poisson$lambda==cv.poisson$lambda.min)
-        print('this is running!!!')
+     #   print('this is running!!!')
         glm.beta<-as.matrix(c(cv.poisson$glmnet.fit$a0[cv.index],cv.poisson$glmnet.fit$beta[-1,cv.index]))
      
         #print(cv.index)   
     
-      print(paste0('This is starting theta: ',glm.beta[1:ifelse(length(glm.beta)>10,10,length(glm.beta)),]))
+   #   print(paste0('This is starting theta: ',glm.beta[1:ifelse(length(glm.beta)>10,10,length(glm.beta)),]))
   
     return(glm.beta=glm.beta)
   }
@@ -160,7 +160,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     L<-length(z.list)
     p.list<-list()
     for(i in 1:L){
-      print(nrow(z.list[[i]]))
+    #  print(nrow(z.list[[i]]))
       z.list[[i]]<-as.matrix(z.list[[i]])
       p.list[[i]]<-nrow(z.list[[i]])
     }
@@ -209,7 +209,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     standardize.model.space=T
     
 
-    print(lambda.list)
+    #print(lambda.list)
   }
 #########Module model##########
   
@@ -807,11 +807,11 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
               modi.ld.S<-opizer$minimum*modi.ld.S+(1-opizer$minimum)*diag(nrow(modi.ld.S)) 
               
               modi.Sigma[test.S,test.S]<-modi.ld.S
-              print(paste0('Outlier BF: ',marginal_likelihood(test.S,Sigma,z,tau.sample,length(test.S),1)-
-                             marginal_likelihood(test.S,modi.Sigma,z,tau.sample,length(test.S),1)))
+             #print(paste0('Outlier BF: ',marginal_likelihood(test.S,Sigma,z,tau.sample,length(test.S),1)-
+            #                 marginal_likelihood(test.S,modi.Sigma,z,tau.sample,length(test.S),1)))
               test.log.BF<-marginal_likelihood(test.S,Sigma,z,tau.sample,length(test.S),1)-marginal_likelihood(test.S,modi.Sigma,z,tau.sample,length(test.S),1)
-              print(test.S)
-              print(paste0('This is xi hat: ', opizer))
+             #print(test.S)
+              #print(paste0('This is xi hat: ', opizer))
               }
                 
               if(exp(test.log.BF)>outlier.BF.index){
@@ -872,11 +872,11 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                          S<-set.gamma[[2]][set.star$gamma.set.index[2],]
                          print(set.star)
           }
-          print(paste0('this is running S: ',paste0(S,collapse = ',')))
+        #  print(paste0('this is running S: ',paste0(S,collapse = ',')))
          #S<-c(S,conditional.S)
           S<-unique(c(S,conditional.S))
       #  pro.data[S,]
-          print(paste0('this is all S: ',paste0(S,collapse = ',')))
+        #  print(paste0('this is all S: ',paste0(S,collapse = ',')))
           #print(h)
         }
         
@@ -1029,7 +1029,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
         glm.beta[1]=log((min(Max.Model.Dim,nrow(all.C.list[[i]][[1]][[2]])))*lambda.list[[i]]/(lambda.list[[i]]+p.list[[i]]))
         prior.prob.list[[i]]<-(exp(w.list[[i]]%*%glm.beta)/(max(1+max(exp(w.list[[i]]%*%glm.beta)),min(Max.Model.Dim,nrow(all.C.list[[i]][[1]][[2]])))))
         if(!is.null(output.labels)){
-        write.table((glm.beta),file=paste0(output.labels,'/post_', label.list[[i]],'_',g,'_theta.txt'),row.names = F,append = F,col.names = F)
+        write.table((glm.beta),file=paste0(output.labels,'/post_', label.list[[i]],'_theta.txt'),row.names = F,append = F,col.names = F)
         }
         plot(prior.prob.list[[i]])
       }
@@ -1061,7 +1061,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                                              effect.size.prior=effect.size.prior,model.prior=model.prior,inner.all.iter = all.inner.iter)
       t1=Sys.time()-t0
       print(paste0('This is locus ',i,' computing time'))
-      saveRDS(all.C.list[[i]][[5]],file=paste0(output.labels,'/post_', label.list[[i]],'_',g,'_prior_prob_list.RData'))
       print((t1))
     }
    #  plot(previous.result[[i]])
