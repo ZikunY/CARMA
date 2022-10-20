@@ -1,7 +1,7 @@
 Package: CARMA
 Type: Package
 Title: CAusal Robust Mapping Method with Annotations (CARMA)
-Version: 1.3
+Version: 1.0
 Date: 2022-01-19
 Author: Zikun Yang [aut, cre, cph],
         Chen Wang [aut, ctb],

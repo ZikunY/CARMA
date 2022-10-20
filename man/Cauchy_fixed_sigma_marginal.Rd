@@ -5,4 +5,6 @@
 \title{Marginal likelihood of Cauchy prior when varinace is fixed}
 \description{
 Marginal likelihood of Cauchy prior when varinace is fixed
+
+Marginal likelihood of Cauchy prior when varinace is fixed
 }

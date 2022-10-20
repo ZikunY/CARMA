@@ -5,4 +5,10 @@
 \title{Marginal likelihood of Normal prior when varinace is fixed}
 \description{
 Marginal likelihood of Normal prior when varinace is fixed
+
+Marginal likelihood of Normal prior when varinace is fixed
+
+Marginal likelihood of Normal prior when varinace is fixed
+
+Marginal likelihood of Normal prior when varinace is fixed
 }

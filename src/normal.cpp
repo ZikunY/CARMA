@@ -20,7 +20,7 @@ double normal_marginal_fun_indi(const double &zSigmaz_S, const double &tau, cons
 
 // [[Rcpp::export]]
 double Normal_marginal(const arma::uvec & index_vec_input, const arma::mat & Sigma,
-                           const arma::vec & z, const double & zSigmaz,  const arma::vec &tau, const double &p, const double & p_S){
+                           const arma::vec & z, const double & zSigmaz,  const double &tau, const double &p, const double & p_S){
   
   arma::uvec index_vec=index_vec_input-1;
   arma::mat Sigma_S=Sigma.submat(index_vec,index_vec);
@@ -30,7 +30,7 @@ double Normal_marginal(const arma::uvec & index_vec_input, const arma::mat & Sig
   double b;
   
   
-  b=normal_marginal_fun_indi(zSigmaz_S(0,0),0.2,p,zSigmaz,p_S);
+  b=normal_marginal_fun_indi(zSigmaz_S(0,0),tau,p,zSigmaz,p_S);
   
   double results=b;
   

@@ -44,7 +44,7 @@
 #'CARMA.result<-CARMA(z.list,ld.list=ld.list,lambda.list = lambda.list,effect.size.prior='Hyper-g')
 
 
-CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list,
+CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list,tau=NULL,
                                  effect.size.prior='Cauchy',rho.index=0.99,BF.index=10,
                                  Max.Model.Dim=2e+4,all.iter=10,all.inner.iter=10,label.list=NULL,
                                 output.labels='.',input.alpha=0,epsilon.threshold=1e-3,input.prior.prob=NULL){
@@ -219,9 +219,9 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list,
   
 #########Module model##########
   
-  Module.Cauchy.Shotgun<-function(z,ld.matrix,Sigma.inv.input,zSigmaz.input,Max.Model.Dim=1e+4,input.S=NULL,lambda,label,
-                                              L=NULL,output.labels,effect.size.prior=effect.size.prior,model.prior=model.prior,
-                                              C.list=NULL,prior.prob=NULL,epsilon=1e-3,inner.all.iter=10){ 
+  Module.Cauchy.Shotgun<-function(z,ld.matrix,Sigma.inv.input,zSigmaz.input,Max.Model.Dim=1e+4,input.S=NULL,tau=NULL,
+                                  lambda,label,L=NULL,output.labels,effect.size.prior=effect.size.prior,
+                                  model.prior=model.prior, C.list=NULL,prior.prob=NULL,epsilon=1e-3,inner.all.iter=10){ 
     {
       ######Define prior distribution ################
   
@@ -253,17 +253,20 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list,
       
       if(effect.size.prior=='Cauchy'){
         marginal_likelihood=Cauchy_marginal
+        tau.sample<-rgamma(1e+5,0.5,rate=0.5)
       }
       if(effect.size.prior=='Hyper-g'){
         marginal_likelihood=hyper_g_marginal
+        tau.sample<-rgamma(1e+5,0.5,rate=0.5)
       }
       if(effect.size.prior=='Normal'){
         marginal_likelihood=Normal_marginal
+        tau.sample<-tau
       }
       #  lambda=1/(nrow(ld.list[[g]]))^(1)
       p<-nrow(z);
       log.2pi<-log(2*pi)
-      tau.sample<-rgamma(1e+5,0.5,rate=0.5)
+     
       B<-Max.Model.Dim
       stored.bf<-0
       Sigma<-as.matrix(ld.matrix)
@@ -690,8 +693,9 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list,
   previous.result<-list()
   for(i in 1:L){
     t0=Sys.time()
-   all.C.list[[i]]<-Module.Cauchy.Shotgun(z.list[[i]],ld.list[[i]],Sigma.inv.input=Sigma.inv.list[[i]],zSigmaz.input = zSigmaz.list[[i]],
-                                           Max.Model.Dim=Max.Model.Dim, input.S = S.list[[i]],epsilon=epsilon.list[[i]],
+   all.C.list[[i]]<-Module.Cauchy.Shotgun(z.list[[i]],ld.list[[i]],Sigma.inv.input=Sigma.inv.list[[i]],
+                                          zSigmaz.input = zSigmaz.list[[i]],Max.Model.Dim=Max.Model.Dim, 
+                                          input.S = S.list[[i]],epsilon=epsilon.list[[i]],tau=tau,
                                            lambda = lambda.list[[i]],prior.prob=input.prior.prob[[i]],
                                            label = label.list[[i]],output.labels = output.labels,
                                            effect.size.prior=effect.size.prior,model.prior=model.prior,inner.all.iter = all.inner.iter)
@@ -762,7 +766,7 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list,
       previous.result[[i]]<-mean(all.C.list[[i]][[1]][[1]][1:round(quantile(1:length(all.C.list[[i]][[1]][[1]]),probs = 0.25))])
       t0=Sys.time()
       all.C.list[[i]]<-Module.Cauchy.Shotgun(z.list[[i]],ld.list[[i]],Sigma.inv.input=Sigma.inv.list[[i]],zSigmaz.input = zSigmaz.list[[i]],
-                                             Max.Model.Dim=Max.Model.Dim,
+                                             Max.Model.Dim=Max.Model.Dim,tau=tau,
                                              C.list = all.C.list[[i]][[2]],prior.prob = prior.prob.list[[i]],
                                              input.S = S.list[[i]],lambda = lambda.list[[i]],epsilon=epsilon.list[[i]],
                                              label = label.list[[i]],output.labels = output.labels,

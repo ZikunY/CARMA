@@ -45,6 +45,17 @@ hyper_g_fixed_sigma_marginal <- function(index_vec_input, Sigma, z, tau, p_S, y_
     .Call(`_CARMA_hyper_g_fixed_sigma_marginal`, index_vec_input, Sigma, z, tau, p_S, y_sigma)
 }
 
+#'@name Normal_fixed_sigma_marginal
+#'@title Marginal likelihood of Normal prior when varinace is fixed
+NULL
+
+#'@return marginal likelihood
+NULL
+
+ind_Normal_fixed_sigma_marginal <- function(index_vec_input, Sigma, z, tau, p_S, y_sigma) {
+    .Call(`_CARMA_ind_Normal_fixed_sigma_marginal`, index_vec_input, Sigma, z, tau, p_S, y_sigma)
+}
+
 #'@name Normal_marginal
 #'@title Marginal likelihood of Normal prior
 NULL
@@ -65,5 +76,38 @@ NULL
 
 Normal_fixed_sigma_marginal <- function(index_vec_input, Sigma, z, tau, p_S, y_sigma) {
     .Call(`_CARMA_Normal_fixed_sigma_marginal`, index_vec_input, Sigma, z, tau, p_S, y_sigma)
+}
+
+#'@name Cauchy_fixed_sigma_marginal
+#'@title Marginal likelihood of Cauchy prior when varinace is fixed
+NULL
+
+#'@return marginal likelihood
+NULL
+
+outlier_Cauchy_fixed_sigma_marginal <- function(index_vec_input, Sigma, z, tau, p_S, y_sigma) {
+    .Call(`_CARMA_outlier_Cauchy_fixed_sigma_marginal`, index_vec_input, Sigma, z, tau, p_S, y_sigma)
+}
+
+#'@name Normal_fixed_sigma_marginal
+#'@title Marginal likelihood of Normal prior when varinace is fixed
+NULL
+
+#'@return marginal likelihood
+NULL
+
+outlier_ind_Normal_marginal <- function(index_vec_input, Sigma, z, tau, p_S, y_sigma) {
+    .Call(`_CARMA_outlier_ind_Normal_marginal`, index_vec_input, Sigma, z, tau, p_S, y_sigma)
+}
+
+#'@name Normal_fixed_sigma_marginal
+#'@title Marginal likelihood of Normal prior when varinace is fixed
+NULL
+
+#'@return marginal likelihood
+NULL
+
+outlier_Normal_fixed_sigma_marginal <- function(index_vec_input, Sigma, z, tau, p_S, y_sigma) {
+    .Call(`_CARMA_outlier_Normal_fixed_sigma_marginal`, index_vec_input, Sigma, z, tau, p_S, y_sigma)
 }
 

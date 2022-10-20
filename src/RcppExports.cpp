@@ -78,8 +78,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ind_Normal_fixed_sigma_marginal
+double ind_Normal_fixed_sigma_marginal(const arma::uvec& index_vec_input, const arma::mat& Sigma, const arma::vec& z, const double& tau, const double& p_S, const double& y_sigma);
+RcppExport SEXP _CARMA_ind_Normal_fixed_sigma_marginal(SEXP index_vec_inputSEXP, SEXP SigmaSEXP, SEXP zSEXP, SEXP tauSEXP, SEXP p_SSEXP, SEXP y_sigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::uvec& >::type index_vec_input(index_vec_inputSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type z(zSEXP);
+    Rcpp::traits::input_parameter< const double& >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const double& >::type p_S(p_SSEXP);
+    Rcpp::traits::input_parameter< const double& >::type y_sigma(y_sigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(ind_Normal_fixed_sigma_marginal(index_vec_input, Sigma, z, tau, p_S, y_sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Normal_marginal
-double Normal_marginal(const arma::uvec& index_vec_input, const arma::mat& Sigma, const arma::vec& z, const double& zSigmaz, const arma::vec& tau, const double& p, const double& p_S);
+double Normal_marginal(const arma::uvec& index_vec_input, const arma::mat& Sigma, const arma::vec& z, const double& zSigmaz, const double& tau, const double& p, const double& p_S);
 RcppExport SEXP _CARMA_Normal_marginal(SEXP index_vec_inputSEXP, SEXP SigmaSEXP, SEXP zSEXP, SEXP zSigmazSEXP, SEXP tauSEXP, SEXP pSEXP, SEXP p_SSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -88,7 +104,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type Sigma(SigmaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type z(zSEXP);
     Rcpp::traits::input_parameter< const double& >::type zSigmaz(zSigmazSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const double& >::type tau(tauSEXP);
     Rcpp::traits::input_parameter< const double& >::type p(pSEXP);
     Rcpp::traits::input_parameter< const double& >::type p_S(p_SSEXP);
     rcpp_result_gen = Rcpp::wrap(Normal_marginal(index_vec_input, Sigma, z, zSigmaz, tau, p, p_S));
@@ -96,8 +112,24 @@ BEGIN_RCPP
 END_RCPP
 }
 // Normal_fixed_sigma_marginal
-double Normal_fixed_sigma_marginal(const arma::uvec& index_vec_input, const arma::mat& Sigma, const arma::vec& z, const arma::vec& tau, const double& p_S, const double& y_sigma);
+double Normal_fixed_sigma_marginal(const arma::uvec& index_vec_input, const arma::mat& Sigma, const arma::vec& z, const double& tau, const double& p_S, const double& y_sigma);
 RcppExport SEXP _CARMA_Normal_fixed_sigma_marginal(SEXP index_vec_inputSEXP, SEXP SigmaSEXP, SEXP zSEXP, SEXP tauSEXP, SEXP p_SSEXP, SEXP y_sigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::uvec& >::type index_vec_input(index_vec_inputSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type z(zSEXP);
+    Rcpp::traits::input_parameter< const double& >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const double& >::type p_S(p_SSEXP);
+    Rcpp::traits::input_parameter< const double& >::type y_sigma(y_sigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(Normal_fixed_sigma_marginal(index_vec_input, Sigma, z, tau, p_S, y_sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// outlier_Cauchy_fixed_sigma_marginal
+double outlier_Cauchy_fixed_sigma_marginal(const arma::uvec& index_vec_input, const arma::mat& Sigma, const arma::vec& z, const arma::vec& tau, const double& p_S, const double& y_sigma);
+RcppExport SEXP _CARMA_outlier_Cauchy_fixed_sigma_marginal(SEXP index_vec_inputSEXP, SEXP SigmaSEXP, SEXP zSEXP, SEXP tauSEXP, SEXP p_SSEXP, SEXP y_sigmaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -107,7 +139,39 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type tau(tauSEXP);
     Rcpp::traits::input_parameter< const double& >::type p_S(p_SSEXP);
     Rcpp::traits::input_parameter< const double& >::type y_sigma(y_sigmaSEXP);
-    rcpp_result_gen = Rcpp::wrap(Normal_fixed_sigma_marginal(index_vec_input, Sigma, z, tau, p_S, y_sigma));
+    rcpp_result_gen = Rcpp::wrap(outlier_Cauchy_fixed_sigma_marginal(index_vec_input, Sigma, z, tau, p_S, y_sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// outlier_ind_Normal_marginal
+double outlier_ind_Normal_marginal(const arma::uvec& index_vec_input, const arma::mat& Sigma, const arma::vec& z, const double& tau, const double& p_S, const double& y_sigma);
+RcppExport SEXP _CARMA_outlier_ind_Normal_marginal(SEXP index_vec_inputSEXP, SEXP SigmaSEXP, SEXP zSEXP, SEXP tauSEXP, SEXP p_SSEXP, SEXP y_sigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::uvec& >::type index_vec_input(index_vec_inputSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type z(zSEXP);
+    Rcpp::traits::input_parameter< const double& >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const double& >::type p_S(p_SSEXP);
+    Rcpp::traits::input_parameter< const double& >::type y_sigma(y_sigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(outlier_ind_Normal_marginal(index_vec_input, Sigma, z, tau, p_S, y_sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// outlier_Normal_fixed_sigma_marginal
+double outlier_Normal_fixed_sigma_marginal(const arma::uvec& index_vec_input, const arma::mat& Sigma, const arma::vec& z, const double& tau, const double& p_S, const double& y_sigma);
+RcppExport SEXP _CARMA_outlier_Normal_fixed_sigma_marginal(SEXP index_vec_inputSEXP, SEXP SigmaSEXP, SEXP zSEXP, SEXP tauSEXP, SEXP p_SSEXP, SEXP y_sigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::uvec& >::type index_vec_input(index_vec_inputSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type z(zSEXP);
+    Rcpp::traits::input_parameter< const double& >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const double& >::type p_S(p_SSEXP);
+    Rcpp::traits::input_parameter< const double& >::type y_sigma(y_sigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(outlier_Normal_fixed_sigma_marginal(index_vec_input, Sigma, z, tau, p_S, y_sigma));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -117,8 +181,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CARMA_Cauchy_fixed_sigma_marginal", (DL_FUNC) &_CARMA_Cauchy_fixed_sigma_marginal, 6},
     {"_CARMA_hyper_g_marginal", (DL_FUNC) &_CARMA_hyper_g_marginal, 7},
     {"_CARMA_hyper_g_fixed_sigma_marginal", (DL_FUNC) &_CARMA_hyper_g_fixed_sigma_marginal, 6},
+    {"_CARMA_ind_Normal_fixed_sigma_marginal", (DL_FUNC) &_CARMA_ind_Normal_fixed_sigma_marginal, 6},
     {"_CARMA_Normal_marginal", (DL_FUNC) &_CARMA_Normal_marginal, 7},
     {"_CARMA_Normal_fixed_sigma_marginal", (DL_FUNC) &_CARMA_Normal_fixed_sigma_marginal, 6},
+    {"_CARMA_outlier_Cauchy_fixed_sigma_marginal", (DL_FUNC) &_CARMA_outlier_Cauchy_fixed_sigma_marginal, 6},
+    {"_CARMA_outlier_ind_Normal_marginal", (DL_FUNC) &_CARMA_outlier_ind_Normal_marginal, 6},
+    {"_CARMA_outlier_Normal_fixed_sigma_marginal", (DL_FUNC) &_CARMA_outlier_Normal_fixed_sigma_marginal, 6},
     {NULL, NULL, 0}
 };
 
