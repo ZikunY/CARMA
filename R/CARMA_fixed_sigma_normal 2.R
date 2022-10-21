@@ -9,11 +9,11 @@
 #'@param w.list Input list of the functional annotations of the testing loci, and each element of the list is the functional annotation matrix of each individual locus.
 #'@param lambda.list Input list of the hyper-parameter \eqn{\eta} of the testing loci, and each element of the list is the hyper-parameter of each individual locus.
 #'@param label.list Input list of the names of the testing loci. Default is NULL. 
-#'@param effect.size.prior The prior of the effect size. The choice are 'Cauchy' and 'Spike-slab' priors, where the 'Spike-slab' prior is the default prior.
+#'@param effect.size.prior The prior of the effect size. The choice are 'Cauchy', 'Hyper-g', and 'Normal' priors, where the Cauchy prior is the default prior.
 #'@param input.alpha The elastic net mixing parameter, where \eqn{0\le}\eqn{\alpha}\eqn{\le 1}.
 #'@param y.var The input variance of the summary statistics, the default value is 1 as the summary statistics are standardized. 
 #'@param rho.index A number between 0 and 1 specifying \eqn{\rho} of the estimated credible sets.
-#'@param BF.index  A number smaller than 1 to specifying the threshold of the Bayes factor of the estimated credible models. The default setting is 3.2.
+#'@param BF.index  A number greater than 1 to specifying the threshold of the Bayes factor of the estimated credible models.
 #'@param outlier.switch The indicator variable of whether turn on the outlier detection. We suggest that the detection should always turn on if using external LD matrix. 
 #'@param outlier.threshold The Bayes threshold of the hypothesis testing of determining outliers, which is 10 by default.
 #'@param num.causal The maximum number of causal variants assumed per locus, which is 10 causal SNPs per locus by default.
@@ -50,7 +50,7 @@
 #'CARMA.result<-CARMA_fixed_sigma(z.list,ld.list=ld.list,
 #'lambda.list = lambda.list,effect.size.prior='Hyper-g')
 CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',label.list=NULL,
-                                 effect.size.prior='Spike-slab',rho.index=0.99,BF.index=10,EM.dist='Logistic',outlier.hypo.form='New.way',
+                                 effect.size.prior='Ind.Normal',rho.index=0.99,BF.index=10,EM.dist='Logistic',outlier.hypo.form='New.way',
                                 Max.Model.Dim=2e+5,all.iter=3,all.inner.iter=10,input.alpha=0,epsilon.threshold=1e-4,
                                  num.causal=10,y.var=1,tau=0.04,outlier.switch=T,outlier.BF.index=1/3.2,prior.prob.computation='Logistic'){
   print(EM.dist)
@@ -358,7 +358,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
              outlier.tau=tau.sample
            }
          }
-         if(effect.size.prior=='Spike-slab'){
+         if(effect.size.prior=='Ind.Normal'){
            marginal_likelihood=ind_Normal_fixed_sigma_marginal
            tau.sample<-tau
            if(outlier.switch){

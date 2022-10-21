@@ -1,0 +1,65 @@
+library(CARMA)
+library(CARMA)
+#remotes::install_github("coolbutuseless/ggpattern")
+rm(list=ls())
+library(xtable)
+library(Matrix)
+library(ggplot2)
+#install.packages("lattice")
+library(ggVennDiagram)
+library(susieR)
+library(tibble)
+library(MASS)
+library(gghighlight)
+library(ggrepel)
+library("ggpmisc")
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+library(scales)
+library(ggpattern)
+#install.packages("ggpattern")
+library(RColorBrewer)
+library(corrplot)
+library(scales)
+source('/Users/liam/Documents/Meeting_Prof.Iuliana/Fine-mapping/Coding/tool_functions.R')
+setwd('/Volumes/My_Passport/Fine-mapping/AD')
+ref.table<-read.csv('ref_table.csv')
+###UKBB_only#########
+adding.points.func<-function(pip,credible.set,pch){
+if(sum(pip>0.99)>=3){
+n.color <- length(credible.set)
+qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+col_vector[which(!is.na( unlist(lapply(credible.set, function(x)(match(which.max(pip),x))))))]<-color.index[s]
+single.index<-which(unlist(lapply(credible.set,length))==1)
+for(cs in single.index){
+points(pro.data$BP[credible.set[[cs]]],(pro.data$Z)[credible.set[[cs]]],
+col=1,pch=pch,cex=2,lwd=1,bg=col_vector[cs])
+}
+}else{
+points(pro.data$BP[which.max(pip)],pro.data$Z[which.max(pip)],
+col=1,
+pch=c(rep(pch,8)),cex=2,lwd=1,bg=c(rep(color.index[s],1)))
+}
+}
+cs.input.fun<-function(cr_set){
+if(length(cr_set)!=0){
+return(cr_set)
+}else{
+return(FALSE)
+}
+}
+model.names<-c('CARMA','SuSiE','fastPAINTOR')
+color.index<-c('#F8766D','#00BA38','#619CFF')
+pp<-c('#67001F', '#B2182B', '#D6604D', '#F4A582',
+'#FDDBC7', '#FFFFFF', '#D1E5F0', '#92C5DE',
+'#4393C3', '#2166AC', '#053061')
+i.index<-(1:32)[-c(8,29)]
+ii.index<-c(1:2,6:7)
+labels<-'polyfun/homo'
+i=3
+pro.data<-(read.table(paste0('Raw_data/',labels,'/',ref.table$locus.name[i],'.processed'),header=T))
+1e-5
+qnorm(1e-5)

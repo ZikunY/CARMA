@@ -1,7 +1,7 @@
 ---
 title: "CARMA Tutorial"
 author: "Zikun Yang"
-date: "8/23/2022"
+date: "10/20/2022"
 output:
   pdf_document: default
   html_document: default
@@ -93,20 +93,21 @@ The input data `sumstat' are typical results of GWAS with summary statistics, su
 ```{r,eval=T, echo=FALSE}
 library(data.table)
 options(digits=2)
-sumstat<- fread(file = "/Users/liam/CARMA/Sample_data/sumstats_chr1_200937832_201937832.txt.gz", 
+sumstat<- fread(file = "/Users/zikunyang/CARMA/Sample_data/sumstats_chr1_200937832_201937832.txt.gz", 
                            sep = "\t", header = T, check.names = F, data.table = F,
                            stringsAsFactors = F)
 print(head(sumstat))
 ```
-Next, we run CARMA with the input summary statistics Z and the LD matrix. 
+Next, we run CARMA with the input summary statistics Z and the LD matrix with the hyperparameter $eta=1$ as the default setting. Notice that given the fact that the LD matrix is in-sample, we turn off the outlier detection by the setting `outlier.switch=F'.
 ```{r, eval=F}
 z.list<-list()
 ld.list<-list()
 lambda.list<-list()
 z.list[[1]]<-sumstat$Z
 ld.list[[1]]<-as.matrix(ld)
-lambda.list[[1]]<-1/sqrt(nrow(ld.list[[1]]))
-CARMA.results<-CARMA(z.list,ld.list,lambda.list=lambda.list)
+lambda.list[[1]]<-1
+CARMA.results<-CARMA_fixed_sigma(z.list,ld.list,lambda.list=lambda.list,
+                                 outlier.switch=F)
 ###### Posterior inclusion probability (PIP) and credible set (CS)
 sumstat.result = sumstat %>% mutate(PIP = CARMA.results[[1]]$PIPs, CS = 0)
 if(length(CARMA.results[[1]]$`Credible set`[[2]])!=0){
@@ -173,7 +174,7 @@ results.table[true.beta,2]<-"True causal"
 print(results.table[order(CARMA.results[[1]]$PIPs,decreasing = T)[1:20],],include.rownames = F)
 
 ```
-We can observe that the $287$th SNP (the causal SNP at left), which is a true causal SNP with a larger Z-score comparing to other highly correlated SNPs, received a medium PIP value. On the other hand, the other two causal SNPs, which are highly correlated to other surrounding SNPs with similar Z-scores, shared the PIPs with the highly correlated SNPs. We can also check the credible sets and credible models.
+We can observe that the $287$th SNP (the causal SNP at left), which is a true causal SNP with a larger Z-score comparing to other highly correlated SNPs, received a medium PIP value comparing to the surrounding SNPs. On the other hand, the other two causal SNPs, which are highly correlated to other surrounding SNPs with similar Z-scores, shared the PIPs with the highly correlated SNPs. We can also check the credible sets and credible models.
 ```{r,eval=T}
 CARMA.results[[1]]$`Credible set`[[2]]
 CARMA.results[[1]]$`Credible model`[[3]]
@@ -193,7 +194,8 @@ annot=fread(file = "Sample_data/sumstats_chr1_200937832_201937832_annotations.tx
 ###### and we add annotations this time.
 annot.list<-list()
 annot.list[[1]]<-annot
-CARMA.results<-CARMA(z.list,ld.list,lambda.list=lambda.list,w.list=annot.list)
+CARMA.results<-CARMA_fixed_sigma(z.list,ld.list,lambda.list=lambda.list,w.list=annot.list,
+                                 outlier.switch=F)
 ###### Posterior inclusion probability (PIP) and credible set (CS)
 sumstat.result = sumstat %>% mutate(PIP = CARMA.results[[1]]$PIPs, CS = 0)
 if(length(CARMA.results[[1]]$`Credible set`[[2]])!=0){
@@ -251,9 +253,9 @@ As observed from the figure above, the inclusion of annotations helps CARMA dist
 CARMA.results[[1]]$`Credible set`[[2]]
 CARMA.results[[1]]$`Credible model`[[3]]
 ```
-The numbers of included SNPs in credible models have been reduced significantly. Also, the credible sets strengthened by the annotations identified the three true causals. 
+The numbers of included SNPs in credible models, which only include to the three true causal SNPs, have been reduced significantly. Also, the credible sets strengthened by the annotations identified the three true causals. 
 
-Notice that, the results can be different from the results shown in the tutorial due to different seeds being used. Also, notice that the result of CARMA based on annotations shown in here is the result of the simulation study in the main manuscript, which is based on xx loci in chromosome 1. In here, we only demonstrate CARMA with one locus for simplicity. 
+Notice that, the results can be different from the results shown in the tutorial due to different seeds being used. Also, notice that the result of CARMA based on annotations shown in here is the result of the simulation study in the main manuscript, which is based on 9 loci in chromosome 1. In here, we only demonstrate CARMA with one locus for simplicity. 
 
 
 ## Summary statistics and LD matrix extracted from reference panels
@@ -292,7 +294,7 @@ From the AD data we use Z-scores. Notice that the sample size values in the colu
 
 ![LocusZoom plot for CR1.](/Volumes/My_Passport/Fine-mapping/locus_2_CR1.png)
 
-Next we run CARMA with two settings: 1. without annotations, and 2. with annotations as described above. We use the function "CARMA_fixed_sigma" to run the meta-analysis with the external LD. The hyperparameter $\eta$ is set at 1 due to the existence of discrepancies between Z/LD. 
+Next we run CARMA with two settings: 1. without annotations, and 2. with annotations as described above. We still use the function "CARMA_fixed_sigma" to run the results of meta-analysis with the external LD and $\eta=1$ as the default setting. Given the fact that the LD matrix is extraced from reference panel (UKBB) instead of in-sample LD, we turn on the outlier detection as setting 'outlier.switch=TRUE'.
 ```{r eval=F, input, echo=TRUE}
 ###### load the GWAS summary statistics (part of AD GWAS sumstats from Jansen et al., 2019)
 sumstat.1 =  fread(file = "Sample_data/ADAMTS4_sumstats.txt.gz", 
@@ -331,7 +333,8 @@ ld.list[[2]]<-as.matrix(ld.2)
 lambda.list[[1]]<-1
 lambda.list[[2]]<-1
 ###### Without annotations
-CARMA.results_no_annot<-CARMA_fixed_sigma(z.list,ld.list,lambda.list =  lambda.list)
+CARMA.results_no_annot<-CARMA_fixed_sigma(z.list,ld.list,lambda.list =  lambda.list,
+                                          outlier.switch=T)
  
 ###### With annotations
 ###### Exclude the variant information columns in annotation file 
@@ -340,7 +343,8 @@ annot.list<-list()
 annot.list[[1]]<-as.matrix(cbind(1, annot.1 %>% select(-(uniqID.a1a2:SNP))))
 annot.list[[2]]<-as.matrix(cbind(1, annot.2 %>% select(-(uniqID.a1a2:SNP))))
 
-CARMA.results_annot<-CARMA_fixed_sigma(z.list,ld.list,w.list=annot.list,lambda.list =  lambda.list,input.alpha=0)
+CARMA.results_annot<-CARMA_fixed_sigma(z.list,ld.list,w.list=annot.list,lambda.list =  lambda.list,
+                                       input.alpha=0, outlier.switch=T)
  
 ###### Posterior inclusion probability (PIP) and credible set (CS)
 sumstat.1 = sumstat.1 %>% mutate(PIP = CARMA.results_annot[[1]]$PIPs, CS = 0)
@@ -432,7 +436,9 @@ if(!sum(pip>0.99)>=3){
  ######CR1
   pro.data<-(read.table(paste0('/Volumes/My_Passport/Fine-mapping/[Vignettes]/data/p_chr1_2.processed'),header=T))
  carma<-readRDS('/Volumes/My_Passport/Fine-mapping/[Vignettes]/data/p_chr1_2.RData')
- carma_annot<-readRDS('/Volumes/My_Passport/Fine-mapping/[Vignettes]/data/chr1.RData')
+ carma_annot<-readRDS('/Volumes/My_Passport/Fine-mapping/[Vignettes]/data/p_chr1_2_anno.RData')
+ carma_annot[[2]]<-carma_annot[[1]]
+ 
  
  pip.list<-list()
  pip.list[[1]]<-carma[[1]]$PIPs
@@ -467,6 +473,8 @@ In the figure above, the credible sets are highlighted by colored shapes. Next, 
                    PIPs=carma_annot[[s]]$PIPs[carma_annot[[s]]$`Credible set`[[2]][[ss]]]))
  }
   s=2
+   carma_annot<-readRDS('/Volumes/My_Passport/Fine-mapping/[Vignettes]/data/p_chr1_2_anno.RData')
+ carma_annot[[2]]<-carma_annot[[1]]
  pro.data<-(read.table(paste0('/Volumes/My_Passport/Fine-mapping/[Vignettes]/data/p_chr1_',s,'.processed'),header=T))
  for(ss in 1:length(carma_annot[[s]]$`Credible set`[[2]])){
  print(paste0('This is the ', f.index[ss],' credible set of the locus CR1'))
@@ -485,6 +493,8 @@ We can also examine the credible models.
   print(data.frame(pro.data[carma_annot[[s]]$`Credible model`[[3]],c(2,3,4,5,6,7)],
                    PIPs=carma_annot[[s]]$PIPs[carma_annot[[s]]$`Credible model`[[3]]]))
   s=2
+   carma_annot<-readRDS('/Volumes/My_Passport/Fine-mapping/[Vignettes]/data/p_chr1_2_anno.RData')
+ carma_annot[[2]]<-carma_annot[[1]]
  pro.data<-(read.table(paste0('/Volumes/My_Passport/Fine-mapping/[Vignettes]/data/p_chr1_',s,'.processed'),header=T))
  
  print(paste0('This is the credible model of the locus CR1'))
