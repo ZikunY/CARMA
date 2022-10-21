@@ -23,6 +23,6 @@ devtools::install_github("ZikunY/CARMA")
 
 ### Citation
 
-> Yang, Z.,  Wang C, Khan A, Vardarajan B,  Mayeux R,  Kiryluk D, Ionita-Laza I, 
+> Yang, Z.,  Wang C, ， Khan A, Vardarajan B,  Mayeux R,  Kiryluk D, Ionita-Laza I, 
 
 > CARMA: Novel Bayesian model for fine-mapping in meta-analysis studies
