@@ -22,6 +22,7 @@
 #'@param all.iter Maximum iterations for EM algorithm to run.
 #'@param output.labels Output directory where output will be written while CARMA is running. Default is the OS root directory ".".
 #'@param epsilon.threshold Convergence threshold measured by average of Bayes factors.
+#'@param EM.dist The distribution of EM for modeling the prior probability regressing the functional annotations. The default distribution is logistic distribution. 
 #'@return The form of the return is a list, for each list:
 #'\itemize{
 #'\item pip - The posterior inclusion probability of each individual locus.
@@ -50,18 +51,14 @@
 #'CARMA.result<-CARMA_fixed_sigma(z.list,ld.list=ld.list,
 #'lambda.list = lambda.list,effect.size.prior='Hyper-g')
 CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',label.list=NULL,
-                                 effect.size.prior='Spike-slab',rho.index=0.99,BF.index=10,EM.dist='Logistic',outlier.hypo.form='New.way',
+                                 effect.size.prior='Spike-slab',rho.index=0.99,BF.index=10,EM.dist='Logistic',
                                 Max.Model.Dim=2e+5,all.iter=3,all.inner.iter=10,input.alpha=0,epsilon.threshold=1e-4,
                                  num.causal=10,y.var=1,tau=0.04,outlier.switch=T,outlier.BF.index=1/3.2,prior.prob.computation='Logistic'){
-  print(EM.dist)
   EM.M.step.func<-function(input.response=NULL,w=w,input.alpha=0.5,EM.dist='Logistic'){
     if(EM.dist=='Poisson'){
       count.index<-input.response
-      #   print('this is running!!!')
       cv.poisson<-cv.glmnet(w,count.index,family = 'poisson',alpha=input.alpha,type.measure='deviance' )
-      #   print('this is running!!!')
       cv.index<-which(cv.poisson$lambda==cv.poisson$lambda.min)
-      #   print('this is running!!!')
       glm.beta<-as.matrix(c(cv.poisson$glmnet.fit$a0[cv.index],cv.poisson$glmnet.fit$beta[-1,cv.index]))
     }
     if(EM.dist=='Logistic'){
@@ -71,15 +68,12 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       glm.beta<-as.matrix(c(cv.logistic$glmnet.fit$a0[cv.index],cv.logistic$glmnet.fit$beta[-1,cv.index]))
       
     }
-    #print(cv.index)   
-    
-    #   print(paste0('This is starting theta: ',glm.beta[1:ifelse(length(glm.beta)>10,10,length(glm.beta)),]))
     
     return(glm.beta=glm.beta)
   }
   credible.set.fun.improved<-function(pip,ld,true.beta=NULL,rho=0.99){
     candidate.r<-c((seq(from=.5,0.95,by=0.05)),seq(0.96,0.99,0.01))
-    #pip=cs.results[[1]]$PIPs
+    
     snp.list<-list()
     colnames(ld)<-rownames(ld)<-1:nrow(ld)
     for(r in 1:length(candidate.r)){
@@ -91,9 +85,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       s<-1
       while(sum(pip[pip.order[s:length(pip.order)]])>rho){
         
-        #print(s)
         cor.group<-as.numeric(names(which(abs(working.ld[which(pip.order[s]==as.numeric(colnames(working.ld))),])>cor.threshold)))
-        #print(sum(as.numeric(colnames(working.ld))==sort(pip.order)))
         if(sum(pip[cor.group])>rho){
           group.pip<- pip[cor.group]
           snp.index<- cor.group[order(group.pip,decreasing = T)][1: min(which(cumsum( sort(group.pip,decreasing = T))>rho))]
@@ -101,8 +93,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
           group.index<-group.index+1
           pip.order<-pip.order[-match(snp.index,pip.order)]
           working.ld<-working.ld[-match(snp.index,as.numeric(colnames(working.ld))),-match(snp.index,as.numeric(colnames(working.ld)))]
-          #dim(working.ld)
-          #print(length(snp.index))
         }else{
           s=s+1
         }
@@ -174,8 +164,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     L<-length(z.list)
     p.list<-list()
     for(i in 1:L){
-    #  print(nrow(z.list[[i]]))
-      z.list[[i]]<-as.matrix(z.list[[i]])
+       z.list[[i]]<-as.matrix(z.list[[i]])
       p.list[[i]]<-nrow(z.list[[i]])
     }
     B<-Max.Model.Dim
@@ -232,7 +221,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     standardize.model.space=T
     
 
-    #print(lambda.list)
   }
 #########Module model##########
   
@@ -243,61 +231,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
        {
          prob.list<-list()
          p<-nrow(z);
-       #  if(model.prior=='input.prob'){
-       #   #lambda=1;p=nrow(pro.data);prior.prob=runif(p,0,0.1)
-       #    # p<-nrow(pro.data)
-       #    # glm.beta=log((min(B,B*1/(1+p))))
-       #   # # p<-nrow(z);
-       #    # B=2e+4
-       #  #    xx<-rep(0,p)
-       # #     xx[1:2]<-1
-       # #      poisson.prior(2)
-       #    # #apply(a2[1:100,],1,input.prior.dist)
-       #  #   input.prior.dist(xx)
-       #    # prior.prob.list[[i]]
-       #    # prior.prob<-prior.prob.list[[i]]
-       #    
-       #    poisson.prior<-function(dim.model){
-       #      result<-dim.model*log(lambda)-lambda+lfactorial(p-dim.model)-lfactorial(p)
-       #      return(result)
-       #    }
-       #    prior.prob.list<-list()
-       #    posi.log.pro.list<-list()
-       #    nega.log.pro.list<-list()
-       # 
-       #    for(pp in 1:100){
-       #      top.index<-order(prior.prob,decreasing = T)[1:pp]
-       #      if((poisson.prior(pp)-(sum(log(1-prior.prob[-top.index]))+sum(log(prior.prob[top.index]))))>0){
-       #        posi.log.pro.list[[pp]]<-log(prior.prob)
-       #        nega.log.pro.list[[pp]]<-log(1-prior.prob)
-       #      }else{
-       #        balance.value<-(poisson.prior(pp)-(sum(log(1-prior.prob[-top.index]))+sum(log(prior.prob[top.index]))))/p
-       #        balance.value<-exp(balance.value)
-       #        prior.prob.list[[pp]]<-1-balance.value+balance.value* prior.prob
-       #        prior.prob.list[[pp]][top.index]<-balance.value* prior.prob[top.index]
-       #        posi.log.pro.list[[pp]]<-log(prior.prob.list[[pp]])
-       #        nega.log.pro.list[[pp]]<-log(1-prior.prob.list[[pp]])
-       #        print(prior.prob.list[[pp]][1:2])
-       #      }
-       #    }
-       #    
-       #    prob.list[[1]]<-posi.log.pro.list
-       #    prob.list[[2]]<-nega.log.pro.list
-       #    prob.list[[3]]<-prior.prob
-       #    
-       #    
-       #    input.prior.dist<-function(x){
-       #      variable.index<-which(x==1)
-       #      pp<-length(variable.index)
-       #      if(any(variable.index)){
-       #        return( sum((nega.log.pro.list[[pp]][-variable.index]))+sum(( posi.log.pro.list[[pp]][variable.index])))
-       #      }else{
-       #        return(poisson.prior(0))
-       #      }
-       #    }
-       #    prior.dist<-input.prior.dist
-       #  }
-          if(model.prior=='input.prob'){
+         if(model.prior=='input.prob'){
             posi.log.pro<-log(prior.prob)
             nega.log.pro<-log(1-prior.prob) 
             input.prior.dist<-function(x){
@@ -315,7 +249,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
        if(model.prior=='Poisson'){
         Poisson.prior.dist<-function(t){
           dim.model<-sum(t)
-          #result<-dim.model*log(lambda)-lambda+lfactorial(p-dim.model)-lfactorial(p)
           result<-dim.model*log(lambda)+lfactorial(p-dim.model)-lfactorial(p)
           return(result)
         }
@@ -336,14 +269,8 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
            marginal_likelihood=Cauchy_fixed_sigma_marginal
            tau.sample<-rgamma(1e+5,0.5,rate=0.5)
            if(outlier.switch){
-             if(outlier.hypo.form=='Original'){
-               outlier_likelihood=Cauchy_fixed_sigma_marginal
-               outlier.tau=tau.sample
-             }
-             if(outlier.hypo.form=='New.way'){
              outlier_likelihood=outlier_Cauchy_fixed_sigma_marginal
              outlier.tau=tau.sample
-             }
            }
          }
          if(effect.size.prior=='Hyper-g'){
@@ -362,76 +289,13 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
            marginal_likelihood=ind_Normal_fixed_sigma_marginal
            tau.sample<-tau
            if(outlier.switch){
-             if(outlier.hypo.form=='Original'){
-               outlier_likelihood=ind_Normal_fixed_sigma_marginal
-               outlier.tau=tau.sample
-             }
-             if(outlier.hypo.form=='New.way'){
+         
                outlier_likelihood=outlier_ind_Normal_marginal
                outlier.tau=tau.sample
-             }
+             
            }
          }
    
-         #  z<-as.matrix(pain.re$Z_3);tau=1/p;ld.matrix<-ld.list[[1]];library(CARMA)
-         #  S<-order(abs(z[,1]),decreasing = T)[1:3]
-         #  S<-c(287)
-         # ld.matrix[S,S]
-         # marginal_likelihood()
-         # tau=1/2
-         # 
-   #       marginal_likelihood(S,ld.matrix,z,tau,length(S),1)#-log(p)
-   
-         # 
-         # ?pbinom
-         # dbinom(length(S),p,1/p,log=T)-lchoose(p,length(S))- dbinom(0,p,1/p,log=T)+lchoose(p,0)
-         #  lbeta(length(S)+1,p-length(S)+9)-lbeta(1,9)
-         #  lbeta(length(S)+1,p-length(S)+9)-lbeta(1,p+9)
-         #  
-         # Poisson.prior.dist(0)
-         # 
-          # tau.fun<-function(tau){det(ld.matrix[S,S]+tau*diag(length(S)))^(-0.5) *t(as.matrix(z[S]))%*%ld.matrix[S,S]%*%solve(ld.matrix[S,S]+tau*diag(length(S)))%*%ld.matrix[S,S]%*%as.matrix(z[S])/(2)+log((tau/(1+tau))^{length(S)/2})}
-          # tau.fun<-Vectorize(tau.fun)
-          # plot(seq(0.00001,1,length.out=1000),tau.fun(seq(0.00001,1,length.out=1000)))
-          # plot(seq(0.00001,1,length.out=1000),m.f(S,ld.matrix,z,seq(0.00001,1,length.out=1000),length(S),1))
-          # 
-          # tau.fun(1/10)
-          #  
-          # eigen(ld.matrix[S,S]+tau*diag(length(S)))
-          # ?determinant
-          # det(ld.matrix[S,S]+tau*diag(length(S)))
-          # #  seq(0.00001,1,length.out=1000)[which.max(tau.fun(seq(0.00001,1,length.out=1000)))]
-          # prior.prob<-rep(1/p^2,p)
-          # 
-          # input.prior.dist<-function(x){
-          #   variable.index<-which(x==1)
-          #   if(any(variable.index)){
-          #     return( sum(posi.log.pro[variable.index])+sum(nega.log.pro[(1:p)[-variable.index]]))
-          #   }else{
-          #     return(sum(nega.log.pro))
-          #   }
-          # }
-          # 
-          # xx<-rep(0,p)
-          # xx[S]<-1
-          # lambda=1
-          # Poisson.prior.dist(xx)
-          # input.prior.dist(xx)-sum(nega.log.pro)
-          # Max.Model.Dim=1e+4
-          # lambda.list<-list()
-          # i=1
-          # lambda.list[[i]]<-1
-          # 
-          # glm.beta=log((min(Max.Model.Dim))*lambda.list[[i]]/(lambda.list[[i]]+p))
-          # prior.prob<-rep((exp(glm.beta)/(max(1+max(exp(glm.beta)),min(Max.Model.Dim)))),p)
-          # 1/p
-         # lambda=5
-         # Poisson.prior.dist()
-         # dim.model=length(S)
-         # dim.model*log(lambda)-lambda+lfactorial(p-dim.model)-lfactorial(p)
-         # lambda=5
-         # 
-         
          
          p<-nrow(z);
       log.2pi<-log(2*pi)
@@ -659,7 +523,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       return(result.prob)
     }
     index.fun.inner<-function(x){
-   #     print(nrow(x));print(p)
       m<-as(matrix(0,nrow=nrow(x),ncol=p),'dgTMatrix')
       m@i<-as.integer(rep(1:nrow(x)-1,each=ncol(x)))
       m@j<-as.integer(c(t(x))-1)
@@ -668,10 +531,8 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       return(m)
     }
     index.fun<-function(outer.x,Max.Model.Dimins=10){
-     #   print(dim(outer.x))
      if(nrow(outer.x)>1000){
     index.bins<-which((1:nrow(outer.x))%%floor(nrow(outer.x)/Max.Model.Dimins)==0)
-    #print(index.bins)
     result.m<-index.fun.inner(outer.x[1:index.bins[1],,drop=F])
     for(b in 1:(length(index.bins)-1)){
       result.m<-rbind(result.m,index.fun.inner(outer.x[(index.bins[b]+1):index.bins[b+1],,drop=F]))
@@ -695,9 +556,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       for(h in 1:10){
         ##############COMPUTATION ############
         { 
-         #conditional.S<-NULL;S<-928
-          #S<-c(133,924,1359);S<-unique(c(S,conditional.S))
-          #conditional.S<-conditional.S[-8]
           
           set.gamma<-set.gamma.func(S,conditional.S)  
           if(is.null(conditional.S)){
@@ -759,8 +617,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                 set.gamma.margin[[i]]<- set.gamma.margin[[i]]+apply(matrix.gamma[[i]],1,prior.dist)
               }
               t1=Sys.time()-t0
-              #print(t1)
-              #print(paste0(sum(!is.na(computed.index))/length(computed.index),'%'))
             }
             
             add.B<-list()
@@ -819,11 +675,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
             for(i in 1:3){
               add.B[[2]]<-rbind(add.B[[2]],matrix.gamma[[i]])
             }
-            #   add.B[[2]]<-rbind(add.B[[2]],matrix.gamma[[3]])
-            
-            
-            #print(paste0('length(S)=',length(S)))
-          }
+           }
           if(length(working.S)==0){
             
             for(i in 2){
@@ -860,21 +712,15 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
             add.B<-list()
             add.B[[1]]<-c(set.gamma.margin[[2]])
             add.B[[2]]<-matrix.gamma[[2]]
-            #print(paste0('length(S)=',length(S)))
           }
           ########## add computed model into the storage of model###############
           ##########
           
           
-          ## Add B.list
-          
           add.index<-match.dgCMatrix(B.list[[2]],add.B[[2]])
           if(length(which(!is.na(add.index)))>10){
             check.index<-sample(which(!is.na(add.index)),10)
-            for(g in 1:4){
-              #print(which(add.B[[2]][check.index[g],]==1))
-              #print(which(B.list[[2]][(add.index[check.index][g]),]==1))
-            }
+ 
           }
           if(length(na.omit(add.index))!=0){
             B.list[[1]]<-c((B.list[[1]]),(add.B[[1]][is.na(add.index)]))
@@ -923,14 +769,8 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
               
               modi.ld.S<- modi.Sigma[test.S,test.S]
               
-              if(outlier.hypo.form=='Original'){
-                opizer<-optimize(ridge.fun,interval=c(0,1),maximum = F)
-                modi.ld.S<-opizer$minimum*modi.ld.S+(1-opizer$minimum)*diag(nrow(modi.ld.S)) 
-              }
-              if(outlier.hypo.form=='New.way'){
                 opizer<-optimize(ridge.fun,interval=c(0,1),maximum = T)
                 modi.ld.S<-opizer$maximum*modi.ld.S+(1-opizer$maximum)*diag(nrow(modi.ld.S)) 
-              }
              
               
               modi.Sigma[test.S,test.S]<-modi.ld.S
@@ -946,7 +786,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                 set.gamma[[i]]<-set.gamma[[i]][-set.star$gamma.set.index[i],]
                 set.gamma.margin[[i]]<-set.gamma.margin[[i]][-set.star$gamma.set.index[i]]
                 conditional.S<-c(conditional.S,test.S[is.na(match(test.S,working.S))])
-              #  print(pro.data[test.S[is.na(match(test.S,S))],])
                 conditional.S<-unique(conditional.S)
               }else{
                 break
@@ -1001,11 +840,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                          print(set.star)
           }
           print(paste0('this is running S: ',paste0(S,collapse = ',')))
-         #S<-c(S,conditional.S)
           S<-unique(c(S,conditional.S))
-      #  pro.data[S,]
-        #  print(paste0('this is all S: ',paste0(S,collapse = ',')))
-          #print(h)
         }
         
      
@@ -1046,8 +881,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
         result.prob<-PIP.func(result.B.list[[1]],result.B.list[[2]])
       }
       conditional.S.list<-data.frame(Index=conditional.S,Z=z[conditional.S,])
-      # plot(result.prob)
-      # pro.data[order(result.prob,decreasing = T)[1:10],] 
       if(!is.null(output.labels)){
         if(dir.exists(output.labels)==F ){
           dir.create(output.labels,recursive = T)
@@ -1173,19 +1006,15 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
           glm.beta[1]=log((min(Max.Model.Dim,nrow(all.C.list[[i]][[1]][[2]])))*lambda.list[[i]]/(lambda.list[[i]]+p.list[[i]]))
           prior.prob.list[[i]]<-(exp(w.list[[i]]%*%glm.beta)/(max(1+max(exp(w.list[[i]]%*%glm.beta)),min(Max.Model.Dim,nrow(all.C.list[[i]][[1]][[2]])))))
           print(sort(prior.prob.list[[i]],decreasing = T)[1:10])
-         # plot(prior.prob.list[[i]],main=g)
         }
         
         if(prior.prob.computation=='Logistic'){
-       #   glm.beta[1]=log(lambda.list[[i]]/p.list[[i]])
           prior.prob.list[[i]]<-plogis(w.list[[i]]%*%glm.beta)
-       #   plot(prior.prob.list[[i]],main=g)
           print(sort(prior.prob.list[[i]],decreasing = T)[1:10])
         }
         if(!is.null(output.labels)){
         write.table((glm.beta),file=paste0(output.labels,'/post_', label.list[[i]],'_theta.txt'),row.names = F,append = F,col.names = F)
         }
-     #   plot(prior.prob.list[[i]])
       }
      model.prior='input.prob'  
     
@@ -1218,11 +1047,9 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       print(paste0('This is locus ',i,' computing time'))
       print((t1))
     }
-   #  plot(previous.result[[i]])
-   #  plot(all.C.list[[i]][[3]])
+
     difference<-0
      for(i in 1:L){
-     #  difference<-difference+sum(abs(previous.result[[i]]-all.C.list[[i]][[3]]))
        difference<-difference+abs(previous.result[[i]]-mean(all.C.list[[i]][[1]][[1]][1:round(quantile(1:length(all.C.list[[i]][[1]][[1]]),probs = 0.25))]))
      }
     print(paste0('This is difference; ',difference))

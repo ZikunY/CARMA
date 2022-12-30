@@ -20,6 +20,6 @@ Imports:
         MASS, 
         Rcpp (>= 1.0.6)
 LinkingTo: Rcpp, RcppArmadillo, RcppGSL
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 NeedsCompilation: yes
 Packaged: 2022-01-20 00:45:50 UTC; zikunyang
