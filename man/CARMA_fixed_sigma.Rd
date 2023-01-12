@@ -11,11 +11,10 @@ CARMA_fixed_sigma(
   lambda.list = NULL,
   output.labels = ".",
   label.list = NULL,
-  effect.size.prior = "Ind.Normal",
+  effect.size.prior = "Spike-slab",
   rho.index = 0.99,
   BF.index = 10,
   EM.dist = "Logistic",
-  outlier.hypo.form = "New.way",
   Max.Model.Dim = 2e+05,
   all.iter = 3,
   all.inner.iter = 10,
@@ -42,11 +41,13 @@ CARMA_fixed_sigma(
 
 \item{label.list}{Input list of the names of the testing loci. Default is NULL.}
 
-\item{effect.size.prior}{The prior of the effect size. The choice are 'Cauchy', 'Hyper-g', and 'Normal' priors, where the Cauchy prior is the default prior.}
+\item{effect.size.prior}{The prior of the effect size. The choice are 'Cauchy' and 'Spike-slab' priors, where the 'Spike-slab' prior is the default prior.}
 
 \item{rho.index}{A number between 0 and 1 specifying \eqn{\rho} of the estimated credible sets.}
 
-\item{BF.index}{A number greater than 1 to specifying the threshold of the Bayes factor of the estimated credible models.}
+\item{BF.index}{A number smaller than 1 to specifying the threshold of the Bayes factor of the estimated credible models. The default setting is 3.2.}
+
+\item{EM.dist}{The distribution of EM for modeling the prior probability regressing the functional annotations. The default distribution is logistic distribution.}
 
 \item{Max.Model.Dim}{Maximum number of the top candidate models based on the unnormalized posterior probability.}
 

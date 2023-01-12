@@ -556,7 +556,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       for(h in 1:10){
         ##############COMPUTATION ############
         { 
-          
           set.gamma<-set.gamma.func(S,conditional.S)  
           if(is.null(conditional.S)){
             working.S=S
@@ -832,8 +831,8 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                            aa[which(is.nan(aa))]<-min(aa)
                          }
                          
-                         set.star$gamma.set.index[2] <-c(sample((1:length(set.gamma.margin[[2]]))[order(exp(aa),decreasing = T)[1:(floor(p/2))]],
-                                                             1,prob=exp(aa)[order(exp(aa),decreasing = T)[1:(floor(p/2))]]))
+                         set.star$gamma.set.index[2] <-c(sample((1:length(set.gamma.margin[[2]]))[order(exp(aa),decreasing = T)[1:(min(length(aa),floor(p/2)))]],
+                                                             1,prob=exp(aa)[order(exp(aa),decreasing = T)[1:(min(length(aa),floor(p/2)))]]))
                          set.star$margin[2]<-set.gamma.margin[[2]][  set.star$gamma.set.index[2]]
                          
                          S<-set.gamma[[2]][set.star$gamma.set.index[2],]
@@ -854,9 +853,9 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
  
      
         for(tt in conditional.S){
-          c.index<-(B.list[[2]]@i[(B.list[[2]]@p[tt]+1):B.list[[2]]@p[tt+1]])+1
+          c.index<-(B.list[[2]]@i[min(length(B.list[[2]]@i),(B.list[[2]]@p[tt]+1)):B.list[[2]]@p[tt+1]])+1
           all.c.index<-c(all.c.index,c.index)
-        }
+          }
       
       all.c.index<-unique(all.c.index)
       temp.B.list<-list()
