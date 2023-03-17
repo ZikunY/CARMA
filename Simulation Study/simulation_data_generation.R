@@ -18,11 +18,11 @@ set.seed(args+50)
 
 
 setwd('Set your working direction')
-   
-ref.table<-read.csv('Simulation loci.csv') ## The file contains the position information of loci from breast cancer GWAS, used in CARMA paper
+## The file contains the position information of loci from breast cancer GWAS, used in CARMA paper
+ref.table<-read.csv('Simulation loci.csv')
+#total number of individuals
+n=10000
 
-n=10000 #total number of individuals
-top.index<-1:10
 
 
 ### The folder name of scenarios regarding number of causal variants per locus
@@ -30,16 +30,16 @@ batch.index<-c('first_batch_genome_wise_noisy',
                'sec_batch_genome_wise_noisy',
                'third_batch_genome_wise_noisy')
 
+## learning chr of the locus
+chr<-as.numeric(substr(ref.table[chor.index,1],4,5))
 
-chr<-as.numeric(substr(ref.table[chor.index,1],4,5))## learning chr of the locus
 
-
-
-whole.deepsea<-read.table(paste0('deepsea/',paste0('chr',chr),'/infile.vcf.out.evalue'),sep = ',',header=T) ## read DeepSEA annotations of the chr
+## read DeepSEA annotations of the chr
+whole.deepsea<-read.table(paste0('deepsea/',paste0('chr',chr),'/infile.vcf.out.evalue'),sep = ',',header=T)
 whole.deepsea<-whole.deepsea[order(whole.deepsea$pos),] # order
 
-
-phi_all=0.0075 #explained variance
+#explained variance
+phi_all=0.0075
 
 
 s=1
@@ -80,8 +80,10 @@ ld.list[[s]]<-cor.x
 
 
 
+# find the overlapped variants between simulated variants and annotations
+pos.index<-which((whole.deepsea$pos<=ref.table$region_end[i] & whole.deepsea$pos>=ref.table$region_start[i]))
 
-pos.index<-which((whole.deepsea$pos<=ref.table$region_end[i] & whole.deepsea$pos>=ref.table$region_start[i])) # find the overlapped variants between simulated variants and annotations
+
 if(length(pos.index)<=p.list[[s]]){
   if(length(pos.index)!=0){
     sup.index<-sample((1:nrow(whole.deepsea))[-pos.index],p.list[[s]]-length(pos.index))
@@ -93,7 +95,8 @@ if(length(pos.index)<=p.list[[s]]){
   pos.index<-sample(pos.index,p.list[[s]],replace = F)
 }
 
-deepsea<-whole.deepsea[pos.index,(ncol(whole.deepsea)-918):ncol(whole.deepsea)] # Extract annotations for the simulated variants
+# Extract annotations for the simulated variants
+deepsea<-whole.deepsea[pos.index,(ncol(whole.deepsea)-918):ncol(whole.deepsea)]
 deepsea<-log(deepsea)
 deepsea<-abs(deepsea)
 deepsea<-scale(deepsea)
@@ -102,16 +105,21 @@ deepsea.list[[s]]<-deepsea
 
 
 s=1
-theta<-read.csv("genome_wise_theta.csv")# theta vector that was previously sampled, so it is genome-wise true theta, all loci use same file
+# theta vector that was previously sampled, so it is genome-wise true theta, all loci use same file
+theta<-read.csv("genome_wise_theta.csv")
 theta<-as.matrix(theta)
 ##########genome-wise
-deepsea.index<-round(seq(1,919,length.out=100))# Same true 100 functional annotations.
+# Same true 100 functional annotations.
+deepsea.index<-round(seq(1,919,length.out=100))
 prior.prob.list<-list()
 true.index.list<-list()
-w.list[[s]]<-as.matrix(cbind(rep(1,p.list[[s]]),as.data.frame(deepsea.list[[s]][,deepsea.index])))
-prior.prob.list[[s]]<-(w.list[[s]]%*%theta) #prior probability
 
-### Sample the true causal for the locus, subjected to the LD restriction
+#save annotaitons
+w.list[[s]]<-as.matrix(cbind(rep(1,p.list[[s]]),as.data.frame(deepsea.list[[s]][,deepsea.index])))
+#save prior probability
+prior.prob.list[[s]]<-(w.list[[s]]%*%theta)
+top.index<-1:10
+### Sample the true causal for the locus, subjected to the LD restriction and prior probabilities
 repeat{
 for(s in 1:length(chor.index)){
     if(num.causal>1){
@@ -180,7 +188,7 @@ par(mfrow=c(2,length(phi_all)))
   stand.x<-scale(true.x.list[[s]])
   lm.b.se<-apply(as.matrix(stand.x),2,function(i) {l<-lm(y~as.matrix(i)-1);s<-summary(l);return(c(coefficients(s)[1:2]))})
    
-   #compute Z scores
+  #compute Z scores
   lm.z<-lm.b.se[1,]/lm.b.se[2,]
   plot(lm.z,main='Summary statistics')
   points(which(beta.index==1),(lm.z)[which(beta.index==1)],col=2,pch=19)
@@ -194,7 +202,7 @@ par(mfrow=c(2,length(phi_all)))
   full_anno<-cbind(1,deepsea.list[[s]][,c(deepsea.index,(1:919)[-deepsea.index][1:100])])# Adding 100 noisy annotations.
   colnames(mid_anno)[1]<-'Coding'
   colnames(full_anno)[1]<-'Coding'
-  ############### CS data
+  ###############Save CARMA data
   write.table(z.score, paste0('data/',
                               ref.table$chr[i],'_',
                               as.character(ref.table$region_start [i]),'_',ref.table$region_end[i]),row.names = F,quote = F)
@@ -212,7 +220,7 @@ par(mfrow=c(2,length(phi_all)))
   as.character(ref.table$region_start [i]),'_',ref.table$region_end[i],'_rank.txt'),
 row.names = F,quote = F,col.names = T)
   
-  #################SuSiE data
+  #################Save SuSiE data
   if(dir.exists(paste0('data/SuSiE/' ))==F){
     dir.create(paste0('data/SuSiE/' ),recursive = T)
   }
