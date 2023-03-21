@@ -1,6 +1,4 @@
 ###Making the dirctory
-#mkdir CARMA
-#cd CARMA
 #git clone https://github.com/ZikunY/CARMA.git
 #Loading libraries
 library(hapsim )
@@ -12,16 +10,11 @@ library(readr)
 library(sim1000G)
 library(Matrix)
 library(pryr)
-#setting up jobs from cluster
-args = commandArgs(TRUE)
-i=as.numeric(args[1])
-set.seed(i)
 
 ##Upper limit of extracted SNPs; Total number of simulated individuals
 num.snps=100000;n=100
 
-setwd('CARMA')
-setwd('/Users/zikunyang/Sample_data')
+setwd('CARMA/Simulation Study')
 ## The file contains the position information of loci from breast cancer GWAS, used in CARMA paper
 ref.table<-read.csv('Simulation loci.csv')
 
