@@ -1,12 +1,7 @@
 ###Making the dirctory
 #mkdir CARMA
 #cd CARMA
-##### Download and save the demo data in folder `CARMA'
-#wget -O Sample_data.tar.gz https://osf.io/5gqz8/download
-##### or download the file from https://osf.io/4t2bz/
-#tar -zxf Sample_data.tar.gz
-#unzip gz file
-#gzip -d Sample_data.tar.gz
+#git clone https://github.com/ZikunY/CARMA.git
 #Loading libraries
 library(hapsim )
 library(stringr)
@@ -36,6 +31,7 @@ pop.names<-c('EUR')
 #####1000G vcf file can be found in the link /vol1/ftp/release/20130502
 #####reading the loucs from 1000G vcf file, which is pre-processed  by using PLINK/1.9.
 #####Here we use the first locus in the csv file to demonstrate the simulation.
+
 a.vcf<-readVCF(paste0(ref.table$chr[1],'_',
                           as.character(ref.table$region_start [1]),'_',ref.table$region_end[1],'.vcf' ),
                    maxNumberOfVariants = num.snps,min_maf=0.01,max_maf = 0.99)
