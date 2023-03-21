@@ -16,6 +16,8 @@ library(Rcpp)
 library(RcppArmadillo)
 library(RcppGSL)
 library(glmnet)
+library(dplyr)
+library(data.table)
 rm(list=ls())
 
 
