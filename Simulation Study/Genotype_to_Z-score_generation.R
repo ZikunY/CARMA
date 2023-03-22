@@ -12,7 +12,7 @@ library(Matrix)
 library(pryr)
 
 ##Upper limit of extracted SNPs; Total number of simulated individuals
-num.snps=100000;n=100
+num.snps=100000;n=1000
 
 setwd('CARMA/Simulation Study')
 ## The file contains the position information of loci from breast cancer GWAS, used in CARMA paper
@@ -248,4 +248,154 @@ write.table(true.beta,file=paste0('data/',
 dev.off()  
 
 
+#########Meta analysis section##########
 
+## The sample sizes of sub-studies
+n.index<-c(100,150,750)
+sample.index<-1:n
+used.sample<-c()
+beta.list<-list()
+se.list<-list()  
+z.list<-list()
+ld.list<-list()
+###Generate the beta_hat and se_hat for the three groups
+for(nn in 1:length(n.index)){
+  
+  current.sample<-sample(sample.index,n.index[nn])
+  
+  temp.x<-true.x[current.sample,]
+  used.sample<-c(used.sample,current.sample)
+  sample.index<-(1:n)[-used.sample]
+  
+  maf<-apply(temp.x,2,function(x){sum(x)/(length(x)*2)})
+  maf.index<-which(maf==0|maf==1)
+  print(maf.index)
+  if(length(maf.index)!=0){
+    maf.prob<-c(length(which(temp.x[,-maf.index]==0)),length(which(temp.x[,-maf.index]==1)),length(which(temp.x[-maf.index]==2)))/
+      (prod(dim(temp.x[,-maf.index])))
+    for(h in 1:length(maf.index)){
+      temp.x[,maf.index[h]]<-sample(c(0,1,2),n.index[nn],prob = maf.prob,replace = T)
+    }
+  }
+  
+  beta.index<-rep(0,p.list[[s]])
+  beta.index[true.index.list[[s]]]<-1
+  
+  beta.value<-rnorm(sum(beta.index),0,sd=0.5)
+  true.beta<-beta.index
+  true.beta[which(beta.index==1)]=beta.value
+  true.mu<-as.matrix(temp.x%*%as.matrix(true.beta))
+  
+  phi=phi_all[1]
+  
+  y<-rnorm(n.index[[nn]],mean=true.mu,sd=sqrt(var(true.mu)*(1-phi)/phi))
+  print(paste0('Proportion; ', (var(true.mu))/
+                 (t(y-temp.x%*%true.beta)%*%(y-temp.x%*%true.beta)/n.index[nn]+var(true.mu))))
+  y<-scale(y)     
+  stand.x<-scale(temp.x)
+  lm.b.se<-apply(as.matrix(stand.x),2,function(i) {l<-lm(y~as.matrix(i)-1);s<-summary(l);return(c(coefficients(s)[1:2]))})
+  
+  lm.z<-lm.b.se[1,]/lm.b.se[2,]
+  
+  beta.list[[nn]]<-lm.b.se[1,]
+  se.list[[nn]]<-lm.b.se[2,]
+  z.list[[nn]]<-lm.z
+  ld.list[[nn]]<-cor(stand.x)
+  
+  
+}
+
+
+#####Using METAL to do the meta-analysis
+meta.combine.list<-list()
+meta.combine.list[[1]]<-list()
+meta.combine.list[[2]]<-list()
+meta.combine.list[[3]]<-list()
+
+####The Z-scroes based on all individuals; groups a, b, and c
+w.abc=(1/se.list[[1]]^2+1/se.list[[2]]^2+1/se.list[[3]]^2)
+meta.combine.list[[3]][[2]]=sqrt(1/w.abc)
+meta.combine.list[[3]][[1]]=beta.list[[1]]/se.list[[1]]^2/w.abc+
+  beta.list[[2]]/se.list[[2]]^2/w.abc+
+  beta.list[[3]]/se.list[[3]]^2/w.abc
+
+####The Z-scores of meta-analysis based on two groups of individuals; a and b
+w.ab=(1/se.list[[1]]^2+1/se.list[[2]]^2)
+meta.combine.list[[2]][[2]]=sqrt(1/w.ab)
+meta.combine.list[[2]][[1]]=beta.list[[1]]/se.list[[1]]^2/w.ab+
+  beta.list[[2]]/se.list[[2]]^2/w.ab
+
+####The Z-scores of meta-analysis based on the individuals of group a
+w.a=(1/se.list[[1]]^2)
+meta.combine.list[[1]][[2]]=sqrt(1/w.a)
+meta.combine.list[[1]][[1]]=beta.list[[1]]/se.list[[1]]^2/w.a
+
+dir.list<-list()
+used.dir<-c()
+dir.index<-1:p.list[[s]]
+
+dir.prop<-c(0.10,0.15,0.75)
+
+
+####Select SNPs that the Z-scores are based on the corrresponding combinations of the meta-analysis defined above
+####The SNPs that Z-scores based on group a
+dir.list[[1]]<-sample(dir.index,dir.prop[1]*p.list[[s]])
+used.dir<-c(used.dir,dir.list[[1]])
+dir.index<-(1:p.list[[s]])[-used.dir]
+print(length(dir.list[[1]]))
+####The SNPs that Z-scores based on group a and b
+dir.list[[2]]<-sample(dir.index,dir.prop[2]*p.list[[s]])
+used.dir<-c(used.dir,dir.list[[2]])
+dir.index<-(1:p.list[[s]])[-used.dir]
+print(length(dir.list[[2]]))
+####The SNPs that Z-scores based on group a, b, and c
+dir.list[[3]]<-dir.index
+print(length(dir.list[[3]]))
+
+meta.beta<-rep(0,p.list[[s]])
+meta.se<-rep(0,p.list[[s]])
+meta.z<-rep(0,p.list[[s]])
+
+for(nn in 1:3){
+  meta.beta[dir.list[[nn]]]<-meta.combine.list[[nn]][[1]][dir.list[[nn]]]
+  meta.se[dir.list[[nn]]]<-meta.combine.list[[nn]][[2]][dir.list[[nn]]]
+}
+
+####Make sure that there are non-causal SNPs in high LD with the causal SNPs that the corresponding Zs are generated based on the meta-analysis of small sample sizes. 
+for(t in 1:length(true.index.list[[s]])){
+  
+  if(length(which(abs(ld.list[[3]][true.index.list[[s]][t],])>0.9))>1){
+    t.c.index<-order(abs(ld.list[[3]][true.index.list[[s]][t],]),decreasing = T)[1:10]
+    if(is.na(match(true.index.list[[s]][t],t.c.index))){
+      t.c.index<-c(t.c.index,true.index.list[[s]][t])
+    }
+    c.index<-sample(t.c.index[-match(true.index.list[[s]][t],t.c.index)],2)
+    meta.beta[c.index]<-meta.combine.list[[1]][[1]][c.index]
+    meta.se[c.index]<-meta.combine.list[[1]][[2]][c.index]
+  }
+  
+}  
+###Make sure that the Z of causal SNPs are based on the complete sample size, group a, b, and c.
+meta.beta[true.index.list[[s]]]<-meta.combine.list[[3]][[1]][true.index.list[[s]]]
+meta.se[true.index.list[[s]]]<-meta.combine.list[[3]][[2]][true.index.list[[s]]]
+
+meta.z<-data.frame(Zscore=meta.beta/meta.se)
+
+
+meta.list<-list()
+meta.list[[1]]<-meta.z
+meta.list[[2]]<-meta.beta
+meta.list[[3]]<-meta.se
+names(meta.list)<-c('Z','beta','se')
+
+names(meta.combine.list)<-c('c','b+c','a+b+c')
+
+###############Save the generated Z-scores of meta-analysis based on different combinations of GWAS
+saveRDS(meta.list, paste0('data/',
+                          ref.table$chr[1],'_',
+                          as.character(ref.table$region_start [1]),'_',ref.table$region_end[1],'_meta.RDS'))
+
+
+saveRDS(meta.combine.list,paste0('data/',
+                                 ref.table$chr[1],'_',
+                                 as.character(ref.table$region_start [1]),'_',ref.table$region_end[1],'_meta_combine.RDS'))
