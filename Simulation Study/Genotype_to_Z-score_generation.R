@@ -21,7 +21,7 @@ ref.table<-read.csv('Simulation loci.csv')
 #Population index, can be changed to EAS, AFR, etc..
 pop.names<-c('EUR')
 
-#####1000G vcf file can be found in the link /vol1/ftp/release/20130502
+#####1000G vcf file can be found in the link https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
 #####reading the loucs from 1000G vcf file, which is pre-processed  by using PLINK/1.9.
 #####Here we use the first locus in the csv file to demonstrate the simulation.
 
