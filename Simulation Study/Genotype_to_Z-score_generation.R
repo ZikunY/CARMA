@@ -1,6 +1,8 @@
-###Making the dirctory
+####This is a demo for using the vcf file from 1000G project to simulate individuals, and generate Z-scores used in the main manuscript in the scenarios: 1)functional annotations 2) complex meta-analysis.
+
+###Create a directory
 #git clone https://github.com/ZikunY/CARMA.git
-#Loading libraries
+#Load libraries
 library(hapsim )
 library(stringr)
 library(cli)
@@ -11,33 +13,35 @@ library(sim1000G)
 library(Matrix)
 library(pryr)
 
-##Upper limit of extracted SNPs; Total number of simulated individuals
-num.snps=100000;n=1000
+##Upper limit of extracted SNPs, which is a safety measure, rarely used
+num.snps=100000
+##Total number of simulated individuals
+n=1000
 
 setwd('CARMA/Simulation Study')
-## The file contains the position information of loci from breast cancer GWAS, used in CARMA paper
+## The file 'Simulation loci.csv' contains position information for loci from breast cancer GWAS, used in simulations in the manuscript
 ref.table<-read.csv('Simulation loci.csv')
 
-#Population index, can be changed to EAS, AFR, etc..
+#Population index from 1000G, can be changed to EAS, AFR, etc..
 pop.names<-c('EUR')
 
-#####1000G vcf file can be found in the link https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
-#####reading the loucs from 1000G vcf file, which is pre-processed  by using PLINK/1.9.
-#####Here we use the first locus in the csv file to demonstrate the simulation.
+#####1000G vcf file can be found at https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
+#####Here we use the first locus listed in the 'Simulation loci.csv' file to demonstrate the simulation.
+###Due to copyright, we can not re-distribute the complete 1000G vcf file. Therefore, we used PLINK to extract the variants from the first locus liseted in the 'Simulation loci.csv' file.   The vcf file here only contains the variants in the first locus listed in the 'Simulation loci.csv' file.
 
 a.vcf<-readVCF(paste0(ref.table$chr[1],'_',
                           as.character(ref.table$region_start [1]),'_',ref.table$region_end[1],'.vcf' ),
                    maxNumberOfVariants = num.snps,min_maf=0.01,max_maf = 0.99)
-###1000G samples file
-map.file<-read.table('integrated_call_samples_v3.20130502.ALL.panel',header=T)
+###1000G sample file; the sample file is the complete list of 2504 individuals in 1000G;
+sample.file<-read.table('integrated_call_samples_v3.20130502.ALL.panel',header=T)
 ### match the population in 1000G
-pop.index<-which(map.file$super_pop==pop.names)
-###The vcf file is pre-processed that only contains 503 EUR individuals; The map file is the complete list of 2504 individuals in 1000G;
+pop.index<-which(sample.file$super_pop==pop.names)
 
 ###1000G map file
 readGeneticMapFromFile(paste0("genetic_map_GRCh37_",ref.table$chr[1],".txt.gz"))
 
-###simulating n individuals
+###simulating n individuals by using function "startSimulation" from the R package sim1000G
+
 startSimulation(a.vcf, totalNumberOfIndividuals =n)
 
 ids = generateUnrelatedIndividuals(n)
@@ -46,26 +50,25 @@ genotype<-as(genotype,"dgCMatrix")
 
 
 
-#####Reading DeepSEA
-#####DeepSEA file can be generated in http://deepsea.princeton.edu/job/analysis/create/
+#####Read DeepSEA annotations
+#####DeepSEA file can be generated at http://deepsea.princeton.edu/job/analysis/create/
 whole.deepsea<-read.table(paste0(ref.table$chr[1],'_',
                                  as.character(ref.table$region_start [1]),'_',ref.table$region_end[1],'.infile.vcf.out.evalue'),header=T)
 whole.deepsea<-whole.deepsea[order(whole.deepsea$pos),] # order
 
 
-### The folder name of scenarios regarding number of causal variants per locus
-batch.index<-c('first_batch_genome_wise_noisy',
-               'sec_batch_genome_wise_noisy',
-               'third_batch_genome_wise_noisy')
-### Here we set the number of causal variant equal to 1 as an example. 
-num.causal=1
-## learning chr of the locus
-chr<-chor.index<-as.numeric(substr(ref.table[1,1],4,5))
-
-
+### Folder names for scenarios with different number of causal variants per locus
+batch.index<-c('one_causal_variant_per_locus',
+               'two_causal_variant_per_locus',
+               'three_causal_variant_per_locus')
+### Here we set the number of causal variant equal to 1 as an example.
+num.causal=1 ## this number can be changed to 2 or 3 accroding to simulation scenario.
+ 
 #explained variance
 phi_all=0.0075
 
+
+###We store the simulated data in the list format. The lists defined below will contain the simulated data, e.g., LD, functional annotations, etc..
 
 s=1
 ld.list<-list()
@@ -76,7 +79,7 @@ w.list<-list()
 deepsea.list<-list()
 maf.list<-list()
 
-
+###Use the genotype generated above.
 true.x<-genotype
 
 true.x<-as.matrix(true.x)
@@ -108,25 +111,25 @@ deepsea<-abs(deepsea)
 deepsea<-scale(deepsea)
 deepsea.list[[s]]<-deepsea
 
-# theta vector that was previously sampled, so it is genome-wise true theta, all loci use same file
+###Due to the fact that the effective functional annotations, which defines the prior causal probabilities, are the same across whole genome (all loci), therefore the theta vector (coefficients of the functional annotations) is also the same for all loci. This means that the theta vector can not be generated differently for generating Z-scores of each locus. Therefore the theta vector was previously sampled, so it is genome-wide true theta, all loci use same file. theta~ Normal(0, 0.2^2)
 theta<-read.csv("genome_wise_theta.csv")
 theta<-as.matrix(theta)
 ##########genome-wise
-# Same true 100 functional annotations.
+# We assume 100 true functional annotations that are associated with the prior causal variance genome-wise, i.e., same true 100 functional annotations with same theta vector.
 deepsea.index<-round(seq(1,919,length.out=100))
 prior.prob.list<-list()
 true.index.list<-list()
 
 
-#save annotaitons
+#save annotations
 w.list[[s]]<-as.matrix(cbind(rep(1,p.list[[s]]),as.data.frame(deepsea.list[[s]][,deepsea.index])))
 #save prior probability
 prior.prob.list[[s]]<-(w.list[[s]]%*%theta)
 top.index<-1:10
-### Sample the true causal for the locus, subjected to the LD restriction and prior probabilities
-chor.index<-1 #Chr 1
+### Sample the true causal variants for the locus, subject to the LD restriction, i.e., there is at least one non-causal variant having LD>0.9 to the true causal variant, and prior probabilities
+
 repeat{
-  for(s in 1:length(chor.index)){
+
     if(num.causal>1){
       
       temp.index<-apply(as.matrix(order(prior.prob.list[[s]],decreasing = T)[top.index]),1,function(x){(sum(abs(ld.list[[s]][x,])>0.90)>=2)& (sum(abs(ld.list[[s]][x,])>0.90)<20)})
@@ -151,9 +154,9 @@ repeat{
     }
     
     
-  }
   
-  if(length(true.index.list)==length(chor.index)){
+  
+  if(length(true.index.list)==num.causal){
     break
   }
   top.index<-1:(max(top.index)+1)
@@ -227,15 +230,14 @@ write.table(top.rank,paste0('data/',
                             as.character(ref.table$region_start [1]),'_',ref.table$region_end[1],'_rank.txt'),
             row.names = F,quote = F,col.names = T)
 
-#################Save SuSiE data
-if(dir.exists(paste0('data/SuSiE/' ))==F){
-  dir.create(paste0('data/SuSiE/' ),recursive = T)
-}
-write.table(lm.b.se[1,],paste0('data/SuSiE/',
+#################Save beta_hat and se_hat
+
+
+write.table(lm.b.se[1,],paste0('data/',
                                ref.table$chr[1],'_',
                                as.character(ref.table$region_start [1]),'_',ref.table$region_end[1],'.beta')
             ,row.names = F,quote = F,col.names = F)
-write.table(lm.b.se[2,],paste0('data/SuSiE/',
+write.table(lm.b.se[2,],paste0('data/',
                                ref.table$chr[1],'_',
                                as.character(ref.table$region_start [1]),'_',ref.table$region_end[1],'.se')
             ,row.names = F,quote = F,col.names = F)
@@ -249,8 +251,10 @@ dev.off()
 
 
 #########Meta analysis section##########
+########In this section, we simulate data in the scenario of complex meta-analysis used in the main manuscript, i.e., the final Z-scores are the results of meta-analysis based on different GWAS with unequal sample sizes for different combinations of GWAS.
 
-## The sample sizes of sub-studies
+## The sample sizes of individual datasets
+## We define the groups asssoicated with sample sizes 100, 150, 750 as group a, b, and c respectively.
 n.index<-c(100,150,750)
 sample.index<-1:n
 used.sample<-c()
@@ -259,6 +263,7 @@ se.list<-list()
 z.list<-list()
 ld.list<-list()
 ###Generate the beta_hat and se_hat for the three groups
+
 for(nn in 1:length(n.index)){
   
   current.sample<-sample(sample.index,n.index[nn])
@@ -312,7 +317,8 @@ meta.combine.list[[1]]<-list()
 meta.combine.list[[2]]<-list()
 meta.combine.list[[3]]<-list()
 
-####The Z-scroes based on all individuals; groups a, b, and c
+####The Z-scores based on all individuals; groups a, b, and c, i.e., the group with sample size 100, 150, and 750 as defined above. 
+
 w.abc=(1/se.list[[1]]^2+1/se.list[[2]]^2+1/se.list[[3]]^2)
 meta.combine.list[[3]][[2]]=sqrt(1/w.abc)
 meta.combine.list[[3]][[1]]=beta.list[[1]]/se.list[[1]]^2/w.abc+
@@ -337,18 +343,18 @@ dir.index<-1:p.list[[s]]
 dir.prop<-c(0.10,0.15,0.75)
 
 
-####Select SNPs that the Z-scores are based on the corrresponding combinations of the meta-analysis defined above
-####The SNPs that Z-scores based on group a
+####Select SNPs whose Z-scores are based on the different combinations of the three datasets above.
+####SNPs with Z-scores based on group a
 dir.list[[1]]<-sample(dir.index,dir.prop[1]*p.list[[s]])
 used.dir<-c(used.dir,dir.list[[1]])
 dir.index<-(1:p.list[[s]])[-used.dir]
 print(length(dir.list[[1]]))
-####The SNPs that Z-scores based on group a and b
+####SNPs with Z-scores based on groups a and b
 dir.list[[2]]<-sample(dir.index,dir.prop[2]*p.list[[s]])
 used.dir<-c(used.dir,dir.list[[2]])
 dir.index<-(1:p.list[[s]])[-used.dir]
 print(length(dir.list[[2]]))
-####The SNPs that Z-scores based on group a, b, and c
+####SNPs with Z-scores based on groups a, b, and c
 dir.list[[3]]<-dir.index
 print(length(dir.list[[3]]))
 
@@ -361,7 +367,7 @@ for(nn in 1:3){
   meta.se[dir.list[[nn]]]<-meta.combine.list[[nn]][[2]][dir.list[[nn]]]
 }
 
-####Make sure that there are non-causal SNPs in high LD with the causal SNPs that the corresponding Zs are generated based on the meta-analysis of small sample sizes. 
+####Include non-causal SNPs in high LD with the causal SNPs with Z scores generated based on the meta-analysis of small sample sizes. 
 for(t in 1:length(true.index.list[[s]])){
   
   if(length(which(abs(ld.list[[3]][true.index.list[[s]][t],])>0.9))>1){
@@ -375,7 +381,8 @@ for(t in 1:length(true.index.list[[s]])){
   }
   
 }  
-###Make sure that the Z of causal SNPs are based on the complete sample size, group a, b, and c.
+
+###The Z scores of causal SNPs are based on the complete datasets (groups a, b, and c).
 meta.beta[true.index.list[[s]]]<-meta.combine.list[[3]][[1]][true.index.list[[s]]]
 meta.se[true.index.list[[s]]]<-meta.combine.list[[3]][[2]][true.index.list[[s]]]
 

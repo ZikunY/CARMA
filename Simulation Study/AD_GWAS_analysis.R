@@ -1,4 +1,6 @@
-###Making the dirctory
+###This is a demo to illustrate the application of CARMA to the two loci, ADAMTS4 and CR1, on chromosome 1 from an Alzheimer's disease GWAS (https://ctg.cncr.nl/software/summary_statistics).
+
+###Create a directory
 #mkdir CARMA
 #cd CARMA
 ##### Download and save the demo data in folder `CARMA'
@@ -7,7 +9,7 @@
 #tar -zxf Sample_data.tar.gz
 #unzip gz file
 #gzip -d Sample_data.tar.gz
-##Loading the library
+##Load libraries
 
 library(Matrix )
 library(MASS )
@@ -25,7 +27,7 @@ rm(list=ls())
 Sys.setenv("PKG_CXXFLAGS"="-std=c++11")#compile functions that use C++11 in R
 
 
-setwd('CARMA')#Set the working path
+setwd('CARMA')#Set the working directory
 
 ###### load the GWAS summary statistics (part of AD GWAS sumstats from Jansen et al., 2019)
 sumstat.1 =  fread(file = "Sample_data/ADAMTS4_sumstats.txt.gz",
@@ -36,8 +38,8 @@ sumstat.2 =  fread(file = "Sample_data/CR1_sumstats.txt.gz",
                    stringsAsFactors = F)
  
 ###### load the functional annotations for the variants included in
-###### GWAS summary statistics (assuming the variants are sorted in
-###### the same order as the variants in sumstat file)
+###### GWAS summary statistics (assuming the same order of variants
+###### as the variants in sumstat file)
 annot.1 =  fread(file = "Sample_data/ADAMTS4_annotations.txt.gz",
                  sep = "\t", header = T, check.names = F, data.table = F,
                  stringsAsFactors = F)
@@ -45,26 +47,31 @@ annot.2 =  fread(file = "Sample_data/CR1_annotations.txt.gz",
                  sep = "\t", header = T, check.names = F, data.table = F,
                  stringsAsFactors = F)
  
-###### load the pair-wise LD matrix (assuming the variants are sorted in
-###### the same order as the variants in sumstat file)
+###### load the pair-wise LD matrix (assuming the same order of variants
+###### as in sumstat file)
 ld.1 =  fread(file = "Sample_data/ADAMTS4_ld.txt.gz",
               sep = "\t", header = F, check.names = F, data.table = F,
               stringsAsFactors = F)
 ld.2 =  fread(file = "Sample_data/CR1_ld.txt.gz",
               sep = "\t", header = F, check.names = F, data.table = F,
               stringsAsFactors = F)
- 
+              
+
+###The format of input for CARMA is list. For each element of the lists, e.g., the list of Z or the list of LD, it contains the corresponding input data for for each locus.
 z.list<-list()
 ld.list<-list()
 lambda.list<-list()
-z.list[[1]]<-sumstat.1$Z
-z.list[[2]]<-sumstat.2$Z
-ld.list[[1]]<-as.matrix(ld.1)
-ld.list[[2]]<-as.matrix(ld.2)
+z.list[[1]]<-sumstat.1$Z #Z scores for ADAMTS4 region
+z.list[[2]]<-sumstat.2$Z #Z scores for CR1 region
+ld.list[[1]]<-as.matrix(ld.1) #LD for ADAMTS4 region
+ld.list[[2]]<-as.matrix(ld.2) #LD for CR1 region
 lambda.list[[1]]<-1 #setting eta=1 for CARMA for ADAMTS4 region
 lambda.list[[2]]<-1 #setting eta=1 for CARMA for CR1 region
 ###### Without annotations
 ###### The outlier detection is turned on. 
+
+
+##### Here we run CARMA main function without annotations.
 CARMA.results_no_annot<-CARMA_fixed_sigma(z.list,ld.list,lambda.list =  lambda.list,
                                           outlier.switch=T)
  
@@ -72,16 +79,20 @@ CARMA.results_no_annot<-CARMA_fixed_sigma(z.list,ld.list,lambda.list =  lambda.l
 ###### Exclude the variant information columns in annotation file
 ###### such as positions and REF/ALT alleles.
 annot.list<-list()
-annot.list[[1]]<-as.matrix(cbind(1, annot.1 %>% select(-(uniqID.a1a2:SNP))))
-annot.list[[2]]<-as.matrix(cbind(1, annot.2 %>% select(-(uniqID.a1a2:SNP))))
+annot.list[[1]]<-as.matrix(cbind(1, annot.1 %>% select(-(uniqID.a1a2:SNP)))) #Functional annotations for ADAMTS4 region
+annot.list[[2]]<-as.matrix(cbind(1, annot.2 %>% select(-(uniqID.a1a2:SNP)))) #Functional annotations for CR1 region
 
+
+####Here we run CARMA main function with annotations, introduced through annot.list.
 CARMA.results_annot<-CARMA_fixed_sigma(z.list,ld.list,w.list=annot.list,
                                        lambda.list =  lambda.list,
                                        input.alpha=0, outlier.switch=T)
  
-###### Posterior inclusion probability (PIP) and credible set (CS)
+###### Posterior inclusion probability (PIP) and credible sets (CS)
+###### The following codes show the PIPs of the variants included in CS for ADAMTS4 region
 sumstat.1 = sumstat.1 %>% mutate(PIP = CARMA.results_annot[[1]]$PIPs, CS = 0)
 sumstat.1$CS[CARMA.results_annot[[1]]$`Credible set`[[2]][[1]]] = 1
+###### The following codes show the PIPs of the variants included in CS for CR1 region
 sumstat.2 = sumstat.2 %>% mutate(PIP = CARMA.results_annot[[2]]$PIPs, CS = 0)
 sumstat.2$CS[CARMA.results_annot[[2]]$`Credible set`[[2]][[1]]] = 1
  
