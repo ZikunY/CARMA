@@ -29,7 +29,7 @@ Sys.setenv("PKG_CXXFLAGS"="-std=c++11")#compile functions that use C++11 in R
 
 setwd('CARMA')#Set the working directory
 
-######The example data are in the folder CARMA, which could be downloaded through the code at the beginning of this document.
+######The example data are in the folder CARMA, which can be downloaded using the code at the beginning of this document.
 ###### load the GWAS summary statistics
 sumstat<- fread(file = "Sample_data/sumstats_chr1_200937832_201937832.txt.gz",
                            sep = "\t", header = T, check.names = F, data.table = F,

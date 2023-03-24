@@ -1,4 +1,4 @@
-###This is a demo to illustrate the application of CARMA to the two loci, ADAMTS4 and CR1, on chromosome 1 from an Alzheimer's disease GWAS (https://ctg.cncr.nl/software/summary_statistics).
+###This is a demo to illustrate the application of CARMA to two loci, ADAMTS4 and CR1, on chromosome 1 from an Alzheimer's disease GWAS (https://ctg.cncr.nl/software/summary_statistics).
 
 ###Create a directory
 #mkdir CARMA
@@ -22,10 +22,7 @@ library(dplyr)
 library(data.table)
 rm(list=ls())
 
-
-
 Sys.setenv("PKG_CXXFLAGS"="-std=c++11")#compile functions that use C++11 in R
-
 
 setwd('CARMA')#Set the working directory
 
@@ -57,7 +54,7 @@ ld.2 =  fread(file = "Sample_data/CR1_ld.txt.gz",
               stringsAsFactors = F)
               
 
-###The format of input for CARMA is list. For each element of the lists, e.g., the list of Z or the list of LD, it contains the corresponding input data for for each locus.
+###The format of input for CARMA is list. For each element of the list, e.g., the list of Z scores or the list of LD, it contains the corresponding input data for each locus.
 z.list<-list()
 ld.list<-list()
 lambda.list<-list()
@@ -67,36 +64,33 @@ ld.list[[1]]<-as.matrix(ld.1) #LD for ADAMTS4 region
 ld.list[[2]]<-as.matrix(ld.2) #LD for CR1 region
 lambda.list[[1]]<-1 #setting eta=1 for CARMA for ADAMTS4 region
 lambda.list[[2]]<-1 #setting eta=1 for CARMA for CR1 region
+
 ###### Without annotations
 ###### The outlier detection is turned on. 
-
-
 ##### Here we run CARMA main function without annotations.
 CARMA.results_no_annot<-CARMA_fixed_sigma(z.list,ld.list,lambda.list =  lambda.list,
                                           outlier.switch=T)
  
 ###### With annotations
-###### Exclude the variant information columns in annotation file
-###### such as positions and REF/ALT alleles.
+###### Exclude the variant information (such as positions and REF/ALT alleles) columns in the annotation file
 annot.list<-list()
 annot.list[[1]]<-as.matrix(cbind(1, annot.1 %>% select(-(uniqID.a1a2:SNP)))) #Functional annotations for ADAMTS4 region
 annot.list[[2]]<-as.matrix(cbind(1, annot.2 %>% select(-(uniqID.a1a2:SNP)))) #Functional annotations for CR1 region
 
 
-####Here we run CARMA main function with annotations, introduced through annot.list.
+####Here we run CARMA main function with annotations in annot.list.
 CARMA.results_annot<-CARMA_fixed_sigma(z.list,ld.list,w.list=annot.list,
                                        lambda.list =  lambda.list,
                                        input.alpha=0, outlier.switch=T)
  
-###### Posterior inclusion probability (PIP) and credible sets (CS)
-###### The following codes show the PIPs of the variants included in CS for ADAMTS4 region
+###### Posterior inclusion probability (PIP) and credible sets (CS) for ADAMTS4 region
 sumstat.1 = sumstat.1 %>% mutate(PIP = CARMA.results_annot[[1]]$PIPs, CS = 0)
 sumstat.1$CS[CARMA.results_annot[[1]]$`Credible set`[[2]][[1]]] = 1
-###### The following codes show the PIPs of the variants included in CS for CR1 region
+###### Posterior inclusion probability (PIP) and credible sets (CS) for CR1 region
 sumstat.2 = sumstat.2 %>% mutate(PIP = CARMA.results_annot[[2]]$PIPs, CS = 0)
 sumstat.2$CS[CARMA.results_annot[[2]]$`Credible set`[[2]][[1]]] = 1
  
-###### write the GWAS summary statistics with PIP and CS
+###### write the GWAS summary statistics with PIPs and CS
 fwrite(x = sumstat.1, file = "Sample_data/ADAMTS4_carma.txt.gz",
         sep = "\t", quote = F, na = "NA", row.names = F, col.names = T, compress = "gzip")
 fwrite(x = sumstat.2, file = "Sample_data/CR1_carma.txt.gz",
