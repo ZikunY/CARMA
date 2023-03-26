@@ -1,33 +1,33 @@
-#' CARMA (fixed variance)
+#' CARMA
 #' 
 #' Performs a Bayesian fine-mapping model in order to identify putative causal variants at GWAS loci. The model requires the summary statistics
-#' of the SNPs in the testing loci, the corresponding LD matrices for fine-mapping, and an estimated variance of traits. Functional annotations can be included as the prior 
-#' information of the causality of the testing SNPs. The model also provides a procedure of outlier detection, which resolves the discrepancies
-#' between the summary statistics and the LD matrix extracted from reference panels. The model can be executed chromosome-wise to increase power. 
-#'@param z.list Input list of the summary statistics of the testing loci, and each element of the list is the summary statistics of each individual locus.
-#'@param ld.list Input list of the LD correlation matrix of the testing loci, and each element of the list is the LD matrix of each individual locus.
-#'@param w.list Input list of the functional annotations of the testing loci, and each element of the list is the functional annotation matrix of each individual locus.
-#'@param lambda.list Input list of the hyper-parameter \eqn{\eta} of the testing loci, and each element of the list is the hyper-parameter of each individual locus.
-#'@param label.list Input list of the names of the testing loci. Default is NULL. 
+#' for the SNPs at the testing loci, the corresponding LD matrices for fine-mapping, and an estimated trait variance. Functional annotations can be included as prior 
+#' information on the causality of the testing SNPs. The model also provides a procedure of outlier detection, which aims to identify discrepancies
+#' between summary statistics and LD matrix extracted from a reference panel. The model can be executed chromosome-wise to increase power. 
+#'@param z.list Input list of summary statistics at the testing loci; each element of the list is the summary statistics at each individual locus.
+#'@param ld.list Input list of LD correlation matrix at the testing loci; each element of the list is the LD matrix at each individual locus.
+#'@param w.list Input list of the functional annotations at the testing loci; each element of the list is the functional annotation matrix at each individual locus.
+#'@param lambda.list Input list of the hyper-parameter \eqn{\eta} at the testing loci; each element of the list is the hyper-parameter of each individual locus.
+#'@param label.list Input list of the names at the testing loci. Default is NULL. 
 #'@param effect.size.prior The prior of the effect size. The choice are 'Cauchy' and 'Spike-slab' priors, where the 'Spike-slab' prior is the default prior.
 #'@param input.alpha The elastic net mixing parameter, where \eqn{0\le}\eqn{\alpha}\eqn{\le 1}.
 #'@param y.var The input variance of the summary statistics, the default value is 1 as the summary statistics are standardized. 
-#'@param rho.index A number between 0 and 1 specifying \eqn{\rho} of the estimated credible sets.
-#'@param BF.index  A number smaller than 1 to specifying the threshold of the Bayes factor of the estimated credible models. The default setting is 3.2.
-#'@param outlier.switch The indicator variable of whether turn on the outlier detection. We suggest that the detection should always turn on if using external LD matrix. 
-#'@param outlier.threshold The Bayes threshold of the hypothesis testing of determining outliers, which is 10 by default.
+#'@param rho.index A number between 0 and 1 specifying \eqn{\rho} for the estimated credible sets.
+#'@param BF.index  A number smaller than 1 specifying the threshold of the Bayes factor of the estimated credible models. The default setting is 3.2.
+#'@param outlier.switch The indicator variable for outlier detection. We suggest that the detection should always be turned on if using external LD matrix. 
+#'@param outlier.threshold The Bayes threshold for the Bayesian hypothesis test for outlier detection, which is 10 by default.
 #'@param num.causal The maximum number of causal variants assumed per locus, which is 10 causal SNPs per locus by default.
 #'@param Max.Model.Dim Maximum number of the top candidate models based on the unnormalized posterior probability. 
 #'@param all.inner.iter Maximum iterations for Shotgun algorithm to run per iteration within EM algorithm.
 #'@param all.iter Maximum iterations for EM algorithm to run.
 #'@param output.labels Output directory where output will be written while CARMA is running. Default is the OS root directory ".".
 #'@param epsilon.threshold Convergence threshold measured by average of Bayes factors.
-#'@param EM.dist The distribution of EM for modeling the prior probability regressing the functional annotations. The default distribution is logistic distribution. 
-#'@return The form of the return is a list, for each list:
+#'@param EM.dist The distribution used to model the prior probability of being causal as a function of functional annotations. The default distribution is logistic distribution. 
+#'@return The return is a list, for each list:
 #'\itemize{
 #'\item pip - The posterior inclusion probability of each individual locus.
-#'\item Credibleset - The information regarding the credible set given a threshold \eqn{\rho}.
-#'\item Credible model - The information regarding the credible model given a threshold  of the Bayes factor.
+#'\item Credibleset - The information on the credible set given a threshold \eqn{\rho}.
+#'\item Credible model - The information on the credible model given a threshold  of the Bayes factor.
 #'\item Outliers - The information regarding the detected outliers.
 #'}
 #'@details The function performs a Bayesian fine-mapping method. 
@@ -54,111 +54,11 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                                  effect.size.prior='Spike-slab',rho.index=0.99,BF.index=10,EM.dist='Logistic',
                                 Max.Model.Dim=2e+5,all.iter=3,all.inner.iter=10,input.alpha=0,epsilon.threshold=1e-4,
                                  num.causal=10,y.var=1,tau=0.04,outlier.switch=T,outlier.BF.index=1/3.2,prior.prob.computation='Logistic'){
-  EM.M.step.func<-function(input.response=NULL,w=w,input.alpha=0.5,EM.dist='Logistic'){
-    if(EM.dist=='Poisson'){
-      count.index<-input.response
-      cv.poisson<-cv.glmnet(w,count.index,family = 'poisson',alpha=input.alpha,type.measure='deviance' )
-      cv.index<-which(cv.poisson$lambda==cv.poisson$lambda.min)
-      glm.beta<-as.matrix(c(cv.poisson$glmnet.fit$a0[cv.index],cv.poisson$glmnet.fit$beta[-1,cv.index]))
-    }
-    if(EM.dist=='Logistic'){
-      response.matrix<-matrix(c(1-input.response, input.response),length(input.response),2)
-      cv.logistic<-cv.glmnet(x=w,y=response.matrix, family='binomial',alpha=input.alpha,type.measure = 'deviance')
-      cv.index<-which(cv.logistic$lambda==cv.logistic$lambda.min)
-      glm.beta<-as.matrix(c(cv.logistic$glmnet.fit$a0[cv.index],cv.logistic$glmnet.fit$beta[-1,cv.index]))
-      
-    }
-    
-    return(glm.beta=glm.beta)
-  }
-  credible.set.fun.improved<-function(pip,ld,true.beta=NULL,rho=0.99){
-    candidate.r<-c((seq(from=.5,0.95,by=0.05)),seq(0.96,0.99,0.01))
-    
-    snp.list<-list()
-    colnames(ld)<-rownames(ld)<-1:nrow(ld)
-    for(r in 1:length(candidate.r)){
-      working.ld<-ld
-      cor.threshold<-candidate.r[r]
-      pip.order<-order(pip,decreasing = T)
-      snp.list[[r]]<-list()
-      group.index<-1
-      s<-1
-      while(sum(pip[pip.order[s:length(pip.order)]])>rho){
-        
-        cor.group<-as.numeric(names(which(abs(working.ld[which(pip.order[s]==as.numeric(colnames(working.ld))),])>cor.threshold)))
-        if(sum(pip[cor.group])>rho){
-          group.pip<- pip[cor.group]
-          snp.index<- cor.group[order(group.pip,decreasing = T)][1: min(which(cumsum( sort(group.pip,decreasing = T))>rho))]
-          snp.list[[r]][[group.index]]<-snp.index
-          group.index<-group.index+1
-          pip.order<-pip.order[-match(snp.index,pip.order)]
-          working.ld<-working.ld[-match(snp.index,as.numeric(colnames(working.ld))),-match(snp.index,as.numeric(colnames(working.ld)))]
-        }else{
-          s=s+1
-        }
-      }
-      
-    }
-    if(sum(sapply(snp.list,length))!=0){
-      group.index<-max(which(sapply(snp.list,length)==max(sapply(snp.list,length))))
-      credible.set.list<-snp.list[[group.index]]
-      if(!is.null(true.beta)){
-        purity<-c()
-        for(s in 1:length(credible.set.list)){
-          purity<-c(purity, (mean(ld[ credible.set.list[[s]], credible.set.list[[s]]]^2)))
-        }
-        causal.snp<-ifelse(length(na.omit(match(unlist(credible.set.list),true.beta)))!=0,
-                           length(na.omit(match(unlist(credible.set.list),true.beta))),0)
-        length.credible<-length(credible.set.list)
-        return(list(c(causal.snp,
-                      ifelse(length.credible==0,NA,length.credible),
-                      mean(sapply(credible.set.list,length)),
-                      mean(purity)),credible.set.list))
-        
-      }else{
-        purity<-c()
-        for(s in 1:length(credible.set.list)){
-          purity<-c(purity, (mean(ld[ credible.set.list[[s]], credible.set.list[[s]]]^2)))
-        }
-        length.credible<-length(credible.set.list)
-        return(list(c(ifelse(length.credible==0,NA,length.credible),
-                      mean(sapply(credible.set.list,length)),
-                      mean(purity)),
-                    credible.set.list))
-      }
-    }else{
-      return(list(rep(0,4),list()))
-    }
-  }
-  credible.model.fun<-function(likelihood,model.space,bayes.threshold=10){
-    na.index<-which(is.na(likelihood))
-    if(length(na.index)!=0){
-      likelihood<-likelihood[-na.index]
-      model.space<-model.space[-na.index,]
-    }
-    post.like.temp<-likelihood-likelihood[1]
-    post.prob<-exp(post.like.temp)/(sum(exp(post.like.temp)))
-    bayes.f<-post.prob[1]/post.prob
-    candidate.model<-1
-    
-    credible.model.list<-list()
-    credible.model.list[[1]]<-list()
-    input.rs<-c()
-    for(ss in 1:length(which(bayes.f<bayes.threshold))){
-      credible.model.list[[1]][[ss]]<-which(model.space[ss,]==1)
-      input.rs<-c(input.rs,which(model.space[ss,]==1))
-    }
-    credible.model.list[[2]]<-data.frame(Posterior.Prob=post.prob[which(bayes.f<bayes.threshold)])
-    credible.model.list[[3]]<-unique(input.rs)
-    return(credible.model.list )
-    
-    
-  }
+                                     
 
   
-  
-  
-  ########## Input data#########
+  ##########  Feature learning step for the CARMA algorithm, such as learning the total number of input loci, the total number of variants at each locus, etc.#########
+  ##########  Additionally, CARMA defines the lists of the model spaces and the likelihood of all input loci###########
   {
     log.2pi<-log(2*pi)
     L<-length(z.list)
@@ -222,13 +122,120 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     
 
   }
-#########Module model##########
+  ###The M-step of the EM algorithm for incorporating functional annotations
+  EM.M.step.func<-function(input.response=NULL,w=w,input.alpha=0.5,EM.dist='Logistic'){
+    if(EM.dist=='Poisson'){
+      count.index<-input.response
+      cv.poisson<-cv.glmnet(w,count.index,family = 'poisson',alpha=input.alpha,type.measure='deviance' )
+      cv.index<-which(cv.poisson$lambda==cv.poisson$lambda.min)
+      glm.beta<-as.matrix(c(cv.poisson$glmnet.fit$a0[cv.index],cv.poisson$glmnet.fit$beta[-1,cv.index]))
+    }
+    if(EM.dist=='Logistic'){
+      response.matrix<-matrix(c(1-input.response, input.response),length(input.response),2)
+      cv.logistic<-cv.glmnet(x=w,y=response.matrix, family='binomial',alpha=input.alpha,type.measure = 'deviance')
+      cv.index<-which(cv.logistic$lambda==cv.logistic$lambda.min)
+      glm.beta<-as.matrix(c(cv.logistic$glmnet.fit$a0[cv.index],cv.logistic$glmnet.fit$beta[-1,cv.index]))
+      
+    }
+    
+    return(glm.beta=glm.beta)
+  }
+  ###The computation of the credible set based on the final results of the fine-mapping step.
+  credible.set.fun.improved<-function(pip,ld,true.beta=NULL,rho=0.99){
+    candidate.r<-c((seq(from=.5,0.95,by=0.05)),seq(0.96,0.99,0.01))
+    
+    snp.list<-list()
+    colnames(ld)<-rownames(ld)<-1:nrow(ld)
+    for(r in 1:length(candidate.r)){
+      working.ld<-ld
+      cor.threshold<-candidate.r[r]
+      pip.order<-order(pip,decreasing = T)
+      snp.list[[r]]<-list()
+      group.index<-1
+      s<-1
+      while(sum(pip[pip.order[s:length(pip.order)]])>rho){
+        
+        cor.group<-as.numeric(names(which(abs(working.ld[which(pip.order[s]==as.numeric(colnames(working.ld))),])>cor.threshold)))
+        if(sum(pip[cor.group])>rho){
+          group.pip<- pip[cor.group]
+          snp.index<- cor.group[order(group.pip,decreasing = T)][1: min(which(cumsum( sort(group.pip,decreasing = T))>rho))]
+          snp.list[[r]][[group.index]]<-snp.index
+          group.index<-group.index+1
+          pip.order<-pip.order[-match(snp.index,pip.order)]
+          working.ld<-working.ld[-match(snp.index,as.numeric(colnames(working.ld))),-match(snp.index,as.numeric(colnames(working.ld)))]
+        }else{
+          s=s+1
+        }
+      }
+      
+    }
+    if(sum(sapply(snp.list,length))!=0){
+      group.index<-max(which(sapply(snp.list,length)==max(sapply(snp.list,length))))
+      credible.set.list<-snp.list[[group.index]]
+      if(!is.null(true.beta)){
+        purity<-c()
+        for(s in 1:length(credible.set.list)){
+          purity<-c(purity, (mean(ld[ credible.set.list[[s]], credible.set.list[[s]]]^2)))
+        }
+        causal.snp<-ifelse(length(na.omit(match(unlist(credible.set.list),true.beta)))!=0,
+                           length(na.omit(match(unlist(credible.set.list),true.beta))),0)
+        length.credible<-length(credible.set.list)
+        return(list(c(causal.snp,
+                      ifelse(length.credible==0,NA,length.credible),
+                      mean(sapply(credible.set.list,length)),
+                      mean(purity)),credible.set.list))
+        
+      }else{
+        purity<-c()
+        for(s in 1:length(credible.set.list)){
+          purity<-c(purity, (mean(ld[ credible.set.list[[s]], credible.set.list[[s]]]^2)))
+        }
+        length.credible<-length(credible.set.list)
+        return(list(c(ifelse(length.credible==0,NA,length.credible),
+                      mean(sapply(credible.set.list,length)),
+                      mean(purity)),
+                    credible.set.list))
+      }
+    }else{
+      return(list(rep(0,4),list()))
+    }
+  }
+  ###The computation of the credible models based on the final results of the fine-mapping step.
+  credible.model.fun<-function(likelihood,model.space,bayes.threshold=10){
+    na.index<-which(is.na(likelihood))
+    if(length(na.index)!=0){
+      likelihood<-likelihood[-na.index]
+      model.space<-model.space[-na.index,]
+    }
+    post.like.temp<-likelihood-likelihood[1]
+    post.prob<-exp(post.like.temp)/(sum(exp(post.like.temp)))
+    bayes.f<-post.prob[1]/post.prob
+    candidate.model<-1
+    
+    credible.model.list<-list()
+    credible.model.list[[1]]<-list()
+    input.rs<-c()
+    for(ss in 1:length(which(bayes.f<bayes.threshold))){
+      credible.model.list[[1]][[ss]]<-which(model.space[ss,]==1)
+      input.rs<-c(input.rs,which(model.space[ss,]==1))
+    }
+    credible.model.list[[2]]<-data.frame(Posterior.Prob=post.prob[which(bayes.f<bayes.threshold)])
+    credible.model.list[[3]]<-unique(input.rs)
+    return(credible.model.list )
+    
+    
+  }
+
+  
+  
+#########The module function of the CARMA fine-mapping step for each locus included in the analysis##########
   
   Module.Cauchy.Shotgun<-function(z,ld.matrix,Max.Model.Dim=1e+4,input.S=NULL,lambda,label,
                                               num.causal=10,output.labels,y.var=1,effect.size.prior=effect.size.prior,model.prior=model.prior,
                                               outlier.switch,input.conditional.S.list=NULL,tau=1/0.05^2,
                                               C.list=NULL,prior.prob=NULL,epsilon=1e-3,inner.all.iter=10){
        {
+     #######The prior distributions on the model space#########
          prob.list<-list()
          p<-nrow(z);
          if(model.prior=='input.prob'){
@@ -263,7 +270,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
         prior.dist<-beta.binomial.dist
       }
       
-      ###### Define marginal likelihood#########  
+      ###### The marginal likelihood defined by the prior distribution of the effect size#########
       
          if(effect.size.prior=='Cauchy'){
            marginal_likelihood=Cauchy_fixed_sigma_marginal
@@ -296,7 +303,8 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
            }
          }
    
-         
+    ########Feature learning for the fine-mapping step, such as learning the visited model space from the previous iterations#######
+
          p<-nrow(z);
       log.2pi<-log(2*pi)
 
@@ -305,7 +313,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       stored.bf<-0
       Sigma<-as.matrix(ld.matrix)
       
-      #########
       if(!is.null(input.S)){
         S<-input.S
       }else{
@@ -333,8 +340,8 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
          }
     }
     
-  
-  
+   
+    ###The function that defines neighborhood model space
     set.gamma.func<-function(input.S,condition.index=NULL){
        set.gamma.func.base<-function(S){
          add.function<-function(y){results<-(apply(as.matrix(S_sub),1,function(x){return(sort(c(x,y)))}))
@@ -503,6 +510,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       return(result)
       
     }
+    ####Function that computes posterior inclusion probability based on the marginal likelihood and model space
     PIP.func<-function(likeli,model.space){
       infi.index<-which(is.infinite(likeli))
       if(length(infi.index)!=0){
@@ -554,7 +562,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     ######################################################
     for(l in 1:inner.all.iter){
       for(h in 1:10){
-        ##############COMPUTATION ############
+        ##############Shotgun COMPUTATION ############
         { 
           set.gamma<-set.gamma.func(S,conditional.S)  
           if(is.null(conditional.S)){
@@ -712,8 +720,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
             add.B[[1]]<-c(set.gamma.margin[[2]])
             add.B[[2]]<-matrix.gamma[[2]]
           }
-          ########## add computed model into the storage of model###############
-          ##########
+          ########## add visited models into the storage space of models###############
           
           
           add.index<-match.dgCMatrix(B.list[[2]],add.B[[2]])
@@ -730,7 +737,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
           }
           B.list[[2]]<-B.list[[2]][order(B.list[[1]],decreasing = T),]
           B.list[[1]]<-B.list[[1]][order(B.list[[1]],decreasing = T)]
-          ###################Select Next S###############
+          ###################Select next visiting model###############
           
           if(length(working.S)!=0){
             set.star<-data.frame(set.index=1:3,gamma.set.index=rep(NA,3),margin=rep(NA,3))
@@ -744,6 +751,8 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
               set.star$margin[i]<-set.gamma.margin[[i]][  set.star$gamma.set.index[i]]
               rm(aa)
             }
+            
+        #######The Bayesian hypothesis testing for Z-scores/LD discrepancies########
             if(outlier.switch){
             for(i in 2:length(set.gamma)){
               repeat{
@@ -757,9 +766,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
               set.star$gamma.set.index[i]<-c(sample((1:length(set.gamma.margin[[i]])),
                                                     1,prob=exp(aa)))
               set.star$margin[i]<-set.gamma.margin[[i]][  set.star$gamma.set.index[i]]
-              
-              ########
-    
+     
               test.S<-set.gamma[[i]][set.star$gamma.set.index[i],]
               
               modi.Sigma<-Sigma
@@ -790,7 +797,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                 break
               }
               }
-              #######
               rm(aa)
             }
             }else{
@@ -805,12 +811,10 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                   set.star$gamma.set.index[i]<-c(sample((1:length(set.gamma.margin[[i]])),
                                                         1,prob=exp(aa)))
                   set.star$margin[i]<-set.gamma.margin[[i]][  set.star$gamma.set.index[i]]
-                 #######
                 rm(aa)
               }
             }
            print(set.star)
-            ##second sample
           
             if(length(working.S)==num.causal){
               set.star<-set.star[-2,]
@@ -844,7 +848,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
         
      
         }
-      ######Result
+      ######Output of the results of the module function######
     
       
       result.B.list<-list()
@@ -903,9 +907,9 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     }
     return(list(result.B.list,C.list,result.prob,conditional.S.list,prob.list))
   }
-  ######## All burning###########
+  ######## Burning step###########
   previous.result<-list()
-  
+  ########Run fine-mapping step (module function) for each locus included in the analysis
   for(i in 1:L){
     t0=Sys.time()
    all.C.list[[i]]<-Module.Cauchy.Shotgun(z.list[[i]],ld.list[[i]],epsilon=epsilon.list[[i]],
@@ -919,6 +923,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
    print((t1))
   
   }
+  ########Running CARMA######## 
   for(g in 1:all.iter){ 
     if(outlier.switch){
       delete.list<-list()
@@ -935,8 +940,8 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       delete.list[[i]]<-integer(0)
       }
       }
-    #########
-    #########
+ 
+    #########If the list of annotations is non-empty, then the PIPs and functional annotations at all loci are aggregated for the M-step of the EM algorithm
     if(!is.null(w.list)){
       w<-matrix(NA,nrow=0,ncol=ncol(w.list[[1]]))
       colnames(w)<-colnames(w.list[[1]])
@@ -952,9 +957,6 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     for(i in 1:L){
       previous.result[[i]]<-mean(all.C.list[[i]][[1]][[1]][1:round(quantile(1:length(all.C.list[[i]][[1]][[1]]),probs = 0.25))])
     }
-    ################################
-    
-    
     if(!is.null(w.list)){
       
     if(EM.dist=='Poisson'){
@@ -984,6 +986,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
     M.step.response=model.space.count
    
     }
+   ######The M step of the EM algorithm
     if(EM.dist=='Logistic'){
       M.step.response<-c()
       for(i in 1:L){
@@ -1033,7 +1036,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
         prior.prob.list[[i]]<-list(NULL)
       }
     }
-    ########    
+   #######Fine-mapping step for each locus, i.e., the E-step in the EM algorithm
     for(i in 1:L){
       t0=Sys.time()
       all.C.list[[i]]<-Module.Cauchy.Shotgun(z=z.list[[i]],ld.list[[i]],input.conditional.S.list = all.C.list[[i]][[4]],
@@ -1056,6 +1059,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
        break
      }
   }
+  ### Output of the results of CARMA
   results.list<-list()
   for(i in 1:L){
     results.list[[i]]<-list()
