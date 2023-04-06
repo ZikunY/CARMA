@@ -531,7 +531,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       return(result.prob)
     }
     index.fun.inner<-function(x){
-      m<-as(matrix(0,nrow=nrow(x),ncol=p),'dgTMatrix')
+      m<-as(as(as(matrix(0,nrow=nrow(x),ncol=p), "dMatrix"), "generalMatrix"), "TsparseMatrix")
       m@i<-as.integer(rep(1:nrow(x)-1,each=ncol(x)))
       m@j<-as.integer(c(t(x))-1)
       m@x=rep(1,nrow(x)*ncol(x))
