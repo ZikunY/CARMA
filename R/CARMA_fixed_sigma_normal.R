@@ -535,7 +535,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
       m@i<-as.integer(rep(1:nrow(x)-1,each=ncol(x)))
       m@j<-as.integer(c(t(x))-1)
       m@x=rep(1,nrow(x)*ncol(x))
-      m<-as(m,"dgCMatrix")
+      m<-as(m,"CsparseMatrix")
       return(m)
     }
     index.fun<-function(outer.x,Max.Model.Dimins=10){
@@ -572,7 +572,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
           }else{
             working.S=S[-match(conditional.S,S)]
             if(length(working.S)!=0){
-            base.model<-as(Matrix(nrow=1,ncol=p,sparse = T,data=0),'dgCMatrix')
+            base.model<-as(Matrix(nrow=1,ncol=p,sparse = T,data=0),'CsparseMatrix')
             base.model[,working.S]<-1
             p_S=length(working.S);
             base.model.margin<-marginal_likelihood(working.S,Sigma,z,tau=tau.sample,p_S=p_S,y.var)+prior.dist(base.model)
@@ -585,7 +585,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
           set.gamma.prior<-list()
           matrix.gamma<-list()
           if(length(working.S)!=0){
-            S.model<-as(Matrix(nrow=1,ncol=p,sparse = T,data=0),'dgCMatrix')
+            S.model<-as(Matrix(nrow=1,ncol=p,sparse = T,data=0),'CsparseMatrix')
             S.model[,working.S]<-1
             p_S=length(working.S);
             current.log.margin<-marginal_likelihood(working.S,Sigma,z,tau=tau.sample,p_S=p_S,y.var)+prior.dist(S.model)
@@ -599,7 +599,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
               matrix.gamma[[i]]<-index.fun(set.gamma[[i]])
               
               if(length(C.list[[2]])<ncol(set.gamma[[i]])){
-                C.list[[2]][[ncol(set.gamma[[i]])]]<-as(Matrix(nrow=0,ncol=p,sparse = T,data=0),'dgCMatrix')
+                C.list[[2]][[ncol(set.gamma[[i]])]]<-as(Matrix(nrow=0,ncol=p,sparse = T,data=0),'CsparseMatrix')
                 C.list[[1]][[ncol(set.gamma[[i]])]]<-integer(0)
                 computed.index<-integer(0)
               }else{
@@ -630,7 +630,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
             add.B[[1]]<-c(set.gamma.margin[[1]],
                           set.gamma.margin[[2]],
                           set.gamma.margin[[3]])
-            add.B[[2]]<-as(Matrix(nrow=0,ncol=p,sparse = T,data=0),'dgCMatrix')
+            add.B[[2]]<-as(Matrix(nrow=0,ncol=p,sparse = T,data=0),'CsparseMatrix')
             for(i in 1:3){
               add.B[[2]]<-rbind(add.B[[2]],matrix.gamma[[i]])
             }
@@ -645,7 +645,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
               matrix.gamma[[i]]<-index.fun(set.gamma[[i]])
               
               if(length(C.list[[2]])<ncol(set.gamma[[i]])){
-                C.list[[2]][[ncol(set.gamma[[i]])]]<-as(Matrix(nrow=0,ncol=p,sparse = T,data=0),'dgCMatrix')
+                C.list[[2]][[ncol(set.gamma[[i]])]]<-as(Matrix(nrow=0,ncol=p,sparse = T,data=0),'CsparseMatrix')
                 C.list[[1]][[ncol(set.gamma[[i]])]]<-integer(0)
                 computed.index<-integer(0)
               }else{
@@ -678,7 +678,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
             add.B[[1]]<-c(set.gamma.margin[[1]],
                           set.gamma.margin[[2]],
                           set.gamma.margin[[3]])
-            add.B[[2]]<-as(Matrix(nrow=0,ncol=p,sparse = T,data=0),'dgCMatrix')
+            add.B[[2]]<-as(Matrix(nrow=0,ncol=p,sparse = T,data=0),'CsparseMatrix')
             for(i in 1:3){
               add.B[[2]]<-rbind(add.B[[2]],matrix.gamma[[i]])
             }
@@ -689,7 +689,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
               matrix.gamma[[i]]<-index.fun(set.gamma[[i]])
               
               if(length(C.list[[2]])<ncol(set.gamma[[i]])){
-                C.list[[2]][[ncol(set.gamma[[i]])]]<-as(Matrix(nrow=0,ncol=p,sparse = T,data=0),'dgCMatrix')
+                C.list[[2]][[ncol(set.gamma[[i]])]]<-as(Matrix(nrow=0,ncol=p,sparse = T,data=0),'CsparseMatrix')
                 C.list[[1]][[ncol(set.gamma[[i]])]]<-integer(0)
                 computed.index<-integer(0)
               }else{
