@@ -79,7 +79,7 @@ annot.list[[2]]<-as.matrix(cbind(1, annot.2 %>% select(-(uniqID.a1a2:SNP)))) #Fu
 
 
 ####Here we run CARMA main function with annotations in annot.list.
-CARMA.results_annot<-CARMA_fixed_sigma(z.list,ld.list,w.list=annot.list,
+CARMA.results_annot<-CARMA(z.list,ld.list,w.list=annot.list,
                                        lambda.list =  lambda.list,
                                        input.alpha=0, outlier.switch=T)
  

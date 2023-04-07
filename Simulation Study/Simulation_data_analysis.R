@@ -50,7 +50,7 @@ lambda.list[[1]]<-1 ####setting eta=1
 
 ##### run CARMA
 ##### We are using in-sample LD here, therefore, the outlier detection is off
-CARMA.results<-CARMA_fixed_sigma(z.list,ld.list,lambda.list=lambda.list,
+CARMA.results<-CARMA(z.list,ld.list,lambda.list=lambda.list,
                                  outlier.switch=F)
 ###### Posterior inclusion probability (PIP) and credible sets (CS)
 sumstat.result = sumstat %>% mutate(PIP = CARMA.results[[1]]$PIPs, CS = 0)
