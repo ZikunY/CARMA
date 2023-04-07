@@ -56,7 +56,7 @@ CARMA_fixed_sigma<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.l
                                  num.causal=10,y.var=1,tau=0.04,outlier.switch=T,outlier.BF.index=1/3.2,prior.prob.computation='Logistic'){
                                      
 
-  
+  Sys.setenv("PKG_CXXFLAGS"="-std=c++11")    #compile functions that use C++11 in R
   ##########  Feature learning step for the CARMA algorithm, such as learning the total number of input loci, the total number of variants at each locus, etc.#########
   ##########  Additionally, CARMA defines the lists of the model spaces and the likelihood of all input loci###########
   {
