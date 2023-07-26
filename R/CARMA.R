@@ -52,7 +52,7 @@
 #'lambda.list = lambda.list,effect.size.prior='Hyper-g')
 CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',label.list=NULL,
                                  effect.size.prior='Spike-slab',rho.index=0.99,BF.index=10,EM.dist='Logistic',
-                                Max.Model.Dim=2e+5,all.iter=2,all.inner.iter=10,input.alpha=0,epsilon.threshold=1e-4,
+                                Max.Model.Dim=2e+5,all.iter=2,all.inner.iter=10,input.alpha=0,epsilon.threshold=1e-5,
                                  num.causal=10,y.var=1,tau=0.04,outlier.switch=T,outlier.BF.index=1/3.2,prior.prob.computation='Logistic'){
                                      
 
