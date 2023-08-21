@@ -19,7 +19,7 @@ CARMA_fixed_sigma(
   all.iter = 3,
   all.inner.iter = 10,
   input.alpha = 0,
-  epsilon.threshold = 1e-04,
+  epsilon.threshold = 1e-05,
   num.causal = 10,
   y.var = 1,
   tau = 0.04,
