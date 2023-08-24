@@ -32,7 +32,7 @@ Important Note
 The pathway for the Intel MLK library and related libraries may differ depending on the operating system. Users should verify the correct pathway on their system and modify the LD_PRELOAD accordingly.
 
 ### Implementation on M1 Mac
-If users encounter issues while installing CARMA on an M1 Mac, it may be due to the failure to locate the GSL library or other libraries during the installation process. The problem could be solved by modifying the ‘PKG_CPPFLAGS’ environment variable in the `~/.R/Makevars file’. This file should be created if it doesn’t exist. Open the `~/.R/Makevars’ file in a text editor, and add the following line to set the PKG_CPPFLAGS environment variable:
+If users encounter issues while installing CARMA on an M1 Mac, it may be due to the failure to locate the GSL library or other libraries during the installation process. The problem could be solved by modifying the ‘PKG_CPPFLAGS’ environment variable in the `/.R/Makevars file’. This file should be created if it doesn’t exist. Open the `/.R/Makevars’ file in a text editor, and add the following line to set the PKG_CPPFLAGS environment variable:
 
 ```bash
 PKG_CPPFLAGS=-I/opt/homebrew/Cellar/gsl/2.7.1/include/
