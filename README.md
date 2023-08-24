@@ -20,6 +20,16 @@ The manual can be found at [https://github.com/ZikunY/CARMA/blob/master/CARMA.pd
 ```r
 devtools::install_github("ZikunY/CARMA")
 ```
+### Intel MLK library 
+CARMA requires the Intel MLK library, therefore please specify the pathway for the Intel MLK library. The Intel MLK library can be installed by the following lines
+
+```bash
+conda install -c anaconda mkl
+LD_PRELOAD=pathto/anaconda3/lib/libmkl_rt.so R
+```
+Important Note
+
+The pathway for the Intel MLK library and related libraries may differ depending on the operating system. Users should verify the correct pathway on their system and modify the LD_PRELOAD accordingly.
 
 ### Citation
 
