@@ -1,28 +1,30 @@
 #' CARMA
-#'
+#' 
 #' Performs a Bayesian fine-mapping model in order to identify putative causal variants at GWAS loci. The model requires the summary statistics
-#' for the SNPs at the testing loci, the corresponding LD matrices for fine-mapping, and an estimated trait variance. Functional annotations can be included as prior
+#' for the SNPs at the testing loci, the corresponding LD matrices for fine-mapping, and an estimated trait variance. Functional annotations can be included as prior 
 #' information on the causality of the testing SNPs. The model also provides a procedure of outlier detection, which aims to identify discrepancies
-#' between summary statistics and LD matrix extracted from a reference panel. The model can be executed chromosome-wise to increase power.
+#' between summary statistics and LD matrix extracted from a reference panel. The model can be executed chromosome-wise to increase power. 
 #'@param z.list Input list of summary statistics at the testing loci; each element of the list is the summary statistics at each individual locus.
 #'@param ld.list Input list of LD correlation matrix at the testing loci; each element of the list is the LD matrix at each individual locus.
 #'@param w.list Input list of the functional annotations at the testing loci; each element of the list is the functional annotation matrix at each individual locus.
 #'@param lambda.list Input list of the hyper-parameter \eqn{\eta} at the testing loci; each element of the list is the hyper-parameter of each individual locus.
-#'@param label.list Input list of the names at the testing loci. Default is NULL.
+#'@param label.list Input list of the names at the testing loci. Default is NULL. 
 #'@param effect.size.prior The prior of the effect size. The choice are 'Cauchy' and 'Spike-slab' priors, where the 'Spike-slab' prior is the default prior.
 #'@param input.alpha The elastic net mixing parameter, where \eqn{0\le}\eqn{\alpha}\eqn{\le 1}.
-#'@param y.var The input variance of the summary statistics, the default value is 1 as the summary statistics are standardized.
+#'@param y.var The input variance of the summary statistics, the default value is 1 as the summary statistics are standardized. 
 #'@param rho.index A number between 0 and 1 specifying \eqn{\rho} for the estimated credible sets.
-#'@param BF.index  A number smaller than 1 specifying the threshold of the Bayes factor of the estimated credible models. The default setting is 3.2.
-#'@param outlier.switch The indicator variable for outlier detection. We suggest that the detection should always be turned on if using external LD matrix.
-#'@param outlier.threshold The Bayes threshold for the Bayesian hypothesis test for outlier detection, which is 10 by default.
+#'@param BF.index  The threshold of the Bayes factor of the estimated credible models. The default setting is 10.
+#'@param outlier.BF.index  The Bayes threshold for the Bayesian hypothesis test for outlier detection. The default setting is 1/3.2. 
+#'@param outlier.switch The indicator variable for outlier detection. We suggest that the detection should always be turned on if using external LD matrix. 
 #'@param num.causal The maximum number of causal variants assumed per locus, which is 10 causal SNPs per locus by default.
-#'@param Max.Model.Dim Maximum number of the top candidate models based on the unnormalized posterior probability.
+#'@param Max.Model.Dim Maximum number of the top candidate models based on the unnormalized posterior probability. 
 #'@param all.inner.iter Maximum iterations for Shotgun algorithm to run per iteration within EM algorithm.
 #'@param all.iter Maximum iterations for EM algorithm to run.
+#'@param tau The prior precision parameter of the effect size. The default value is computed based on the scenario of n=10000 and 1% heritability.
 #'@param output.labels Output directory where output will be written while CARMA is running. Default is the OS root directory ".".
 #'@param epsilon.threshold Convergence threshold measured by average of Bayes factors.
-#'@param EM.dist The distribution used to model the prior probability of being causal as a function of functional annotations. The default distribution is logistic distribution.
+#'@param printing.log Whether print the running log while running CARMA.
+#'@param EM.dist The distribution used to model the prior probability of being causal as a function of functional annotations. The default distribution is logistic distribution. 
 #'@return The return is a list, for each list:
 #'\itemize{
 #'\item pip - The posterior inclusion probability of each individual locus.
@@ -30,9 +32,9 @@
 #'\item Credible model - The information on the credible model given a threshold  of the Bayes factor.
 #'\item Outliers - The information regarding the detected outliers.
 #'}
-#'@details The function performs a Bayesian fine-mapping method.
-#'@examples
-#'# Example
+#'@details The function performs a Bayesian fine-mapping method. 
+#'@examples 
+#'# Example 
 #'set.seed(1)
 #'n = 400
 #'p = 500
@@ -48,11 +50,11 @@
 #'ld.list[[1]]<-cov(X)
 #'lambda.list<-list()
 #'lambda.list[[1]]<-1/sqrt(p)
-#'CARMA.result<-CARMA_fixed_sigma(z.list,ld.list=ld.list,
+#'CARMA.result<-CARMA(z.list,ld.list=ld.list,
 #'lambda.list = lambda.list,effect.size.prior='Hyper-g')
 CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',label.list=NULL,
                                  effect.size.prior='Spike-slab',rho.index=0.99,BF.index=10,EM.dist='Logistic',
-                                Max.Model.Dim=2e+5,all.iter=2,all.inner.iter=10,input.alpha=0,epsilon.threshold=1e-5,
+                                Max.Model.Dim=2e+5,all.iter=3,all.inner.iter=10,input.alpha=0,epsilon.threshold=1e-5,printing.log=F,
                                  num.causal=10,y.var=1,tau=0.04,outlier.switch=T,outlier.BF.index=1/3.2,prior.prob.computation='Logistic'){
                                      
 
@@ -230,7 +232,7 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
   
 #########The module function of the CARMA fine-mapping step for each locus included in the analysis##########
   
-  Module.Cauchy.Shotgun<-function(z,ld.matrix,Max.Model.Dim=1e+4,input.S=NULL,lambda,label,
+  Module.Cauchy.Shotgun<-function(z,ld.matrix,Max.Model.Dim=1e+4,input.S=NULL,lambda,label,printing.log=F,
                                               num.causal=10,output.labels,y.var=1,effect.size.prior=effect.size.prior,model.prior=model.prior,
                                               outlier.switch,input.conditional.S.list=NULL,tau=1/0.05^2,
                                               C.list=NULL,prior.prob=NULL,epsilon=1e-3,inner.all.iter=10){
@@ -240,7 +242,7 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
          p<-nrow(z);
          if(model.prior=='input.prob'){
             posi.log.pro<-log(prior.prob)
-            nega.log.pro<-log(1-prior.prob)
+            nega.log.pro<-log(1-prior.prob) 
             input.prior.dist<-function(x){
               variable.index<-which(x==1)
               if(any(variable.index)){
@@ -373,7 +375,7 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
            #set of gamma=
            set.gamma[[3]]<-add.function(set.gamma[[1]][1,])
            for(i in 2:nrow(set.gamma[[1]])){
-             set.gamma[[3]]<-rbind(set.gamma[[3]],add.function(set.gamma[[1]][i,]))
+             set.gamma[[3]]<-rbind(set.gamma[[3]],add.function(set.gamma[[1]][i,]))  
            }
          }
          if(length(S)==1){
@@ -425,7 +427,7 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
            set.gamma[[3]]<-add.function(set.gamma[[1]][1,])
            factorial(3)
            for(i in 2:nrow(set.gamma[[1]])){
-             set.gamma[[3]]<-rbind(set.gamma[[3]],add.function(set.gamma[[1]][i,]))
+             set.gamma[[3]]<-rbind(set.gamma[[3]],add.function(set.gamma[[1]][i,]))  
            }
          }
          
@@ -500,11 +502,11 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
       }
       if(any(is_empty1)){
         if(any(is_empty2)){
-          result<-c(is_empty1,result)
+          result<-c(is_empty1,result)  
         }
       }else{
         if(any(is_empty2)){
-          result<-c(NA,result)
+          result<-c(NA,result)  
         }
       }
       return(result)
@@ -563,8 +565,8 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
     for(l in 1:inner.all.iter){
       for(h in 1:10){
         ##############Shotgun COMPUTATION ############
-        {
-          set.gamma<-set.gamma.func(S,conditional.S)
+        { 
+          set.gamma<-set.gamma.func(S,conditional.S)  
           if(is.null(conditional.S)){
             working.S=S
             base.model<-null.model
@@ -776,16 +778,18 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
               modi.ld.S<- modi.Sigma[test.S,test.S]
               
                 opizer<-optimize(ridge.fun,interval=c(0,1),maximum = T)
-                modi.ld.S<-opizer$maximum*modi.ld.S+(1-opizer$maximum)*diag(nrow(modi.ld.S))
+                modi.ld.S<-opizer$maximum*modi.ld.S+(1-opizer$maximum)*diag(nrow(modi.ld.S)) 
              
               
               modi.Sigma[test.S,test.S]<-modi.ld.S
         
               test.log.BF<-outlier_likelihood(test.S,Sigma,z,outlier.tau,length(test.S),1)-outlier_likelihood(test.S,modi.Sigma,z,outlier.tau,length(test.S),1)
               test.log.BF<--abs(test.log.BF)
+              if(printing.log==T){
               print(paste0('Outlier BF: ', test.log.BF))
               print(test.S)
               print(paste0('This is xi hat: ', opizer))
+              }
               }
                 
               if(exp(test.log.BF)<outlier.BF.index){
@@ -814,8 +818,9 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
                 rm(aa)
               }
             }
+            if(printing.log==T){
            print(set.star)
-          
+          }
             if(length(working.S)==num.causal){
               set.star<-set.star[-2,]
               aa<-set.star$margin-current.log.margin-max(set.star$margin-current.log.margin)
@@ -840,9 +845,13 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
                          set.star$margin[2]<-set.gamma.margin[[2]][  set.star$gamma.set.index[2]]
                          
                          S<-set.gamma[[2]][set.star$gamma.set.index[2],]
-                         print(set.star)
-          }
+                         if(printing.log==T){
+                           print(set.star)
+                         }
+            }
+          if(printing.log==T){
           print(paste0('this is running S: ',paste0(S,collapse = ',')))
+          }
           S<-unique(c(S,conditional.S))
         }
         
@@ -898,7 +907,7 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
 
       
       difference<-abs(mean(result.B.list[[1]][1:round(quantile(1:length(result.B.list[[1]]),probs = 0.25))])-stored.bf)
-       print(difference)
+     #  print(difference)
        if(difference<epsilon){
          break
        }else{
@@ -915,7 +924,7 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
    all.C.list[[i]]<-Module.Cauchy.Shotgun(z.list[[i]],ld.list[[i]],epsilon=epsilon.list[[i]],
                                            Max.Model.Dim=Max.Model.Dim,lambda = lambda.list[[i]],
                                           outlier.switch=outlier.switch,tau=tau,
-                                           num.causal = num.causal,y.var=y.var,
+                                           num.causal = num.causal,y.var=y.var,printing.log=printing.log,
                                            label = label.list[[i]],output.labels = output.labels,
                                            effect.size.prior=effect.size.prior,model.prior=model.prior,inner.all.iter = all.inner.iter)
    t1=Sys.time()-t0
@@ -923,8 +932,8 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
    print((t1))
   
   }
-  ########Running CARMA########
-  for(g in 1:all.iter){
+  ########Running CARMA######## 
+  for(g in 1:all.iter){ 
     if(outlier.switch){
       delete.list<-list()
       for(i in 1:L){
@@ -1007,18 +1016,18 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
         if(prior.prob.computation=='Intercept.approx'){
           glm.beta[1]=log((min(Max.Model.Dim,nrow(all.C.list[[i]][[1]][[2]])))*lambda.list[[i]]/(lambda.list[[i]]+p.list[[i]]))
           prior.prob.list[[i]]<-(exp(w.list[[i]]%*%glm.beta)/(max(1+max(exp(w.list[[i]]%*%glm.beta)),min(Max.Model.Dim,nrow(all.C.list[[i]][[1]][[2]])))))
-          print(sort(prior.prob.list[[i]],decreasing = T)[1:10])
+      #    print(sort(prior.prob.list[[i]],decreasing = T)[1:10])
         }
         
         if(prior.prob.computation=='Logistic'){
           prior.prob.list[[i]]<-plogis(w.list[[i]]%*%glm.beta)
-          print(sort(prior.prob.list[[i]],decreasing = T)[1:10])
+      #    print(sort(prior.prob.list[[i]],decreasing = T)[1:10])
         }
         if(!is.null(output.labels)){
         write.table((glm.beta),file=paste0(output.labels,'/post_', label.list[[i]],'_theta.txt'),row.names = F,append = F,col.names = F)
         }
       }
-     model.prior='input.prob'
+     model.prior='input.prob'  
     
     }else{
       model.prior='Poisson'
@@ -1042,7 +1051,7 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
       all.C.list[[i]]<-Module.Cauchy.Shotgun(z=z.list[[i]],ld.list[[i]],input.conditional.S.list = all.C.list[[i]][[4]],
                                              Max.Model.Dim=Max.Model.Dim,y.var=y.var,num.causal = num.causal,epsilon=epsilon.list[[i]],
                                              C.list = all.C.list[[i]][[2]],prior.prob = prior.prob.list[[i]],
-                                             outlier.switch=outlier.switch,tau=tau,
+                                             outlier.switch=outlier.switch,tau=tau,printing.log=printing.log,
                                              lambda = lambda.list[[i]], label = label.list[[i]],output.labels = output.labels,
                                              effect.size.prior=effect.size.prior,model.prior=model.prior,inner.all.iter = all.inner.iter)
       t1=Sys.time()-t0
@@ -1054,7 +1063,10 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
      for(i in 1:L){
        difference<-difference+abs(previous.result[[i]]-mean(all.C.list[[i]][[1]][[1]][1:round(quantile(1:length(all.C.list[[i]][[1]][[1]]),probs = 0.25))]))
      }
-    print(paste0('This is difference; ',difference))
+    if(printing.log==T){
+      print(paste0('This is difference; ',difference))
+    }
+   
      if(difference<all.epsilon.threshold){
        break
      }
