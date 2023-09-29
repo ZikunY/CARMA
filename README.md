@@ -22,6 +22,7 @@ PLINK is a popular and useful toolset used for generating LD matrix from either 
 ```{bash, eval=F}
 ./plink --bfile bed.file --a1-allele SNP.txt 2 1 '#' --r --matrix --out LD
 ```
+The ``SNP.txt'' file includes the information of SNP names and ref alleles from the GWAS summary statistics. 
 
 ### Installation
 ```r
