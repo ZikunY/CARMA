@@ -19,10 +19,11 @@ The manual can be found at [https://github.com/ZikunY/CARMA/blob/master/CARMA.pd
 ### Generating LD matrix using PLINK
 
 PLINK is a popular and useful toolset used for generating LD matrix from either VCF or BED file. It is important to notice that the command ``--r'' should be specified to generate $r$ LD, instead of $r^2$ LD as the $r^2$ LD does not account for the directions (sign) of the summary statistics. Additionally, maintaining consistency in the coding order of testing alleles between summary statistics and the LD from the reference panels is also crucial for fine-mapping analysis. The following command is an example of generating LD matrix with PLINK while ensuring the coding order of testing alleles remain consistent.  
-```{bash, eval=F}
+```bash
 ./plink --bfile bed.file --a1-allele SNP.txt 2 1 '#' --r --matrix --out LD
 ```
-The ``SNP.txt'' file includes the information of SNP names and ref alleles from the GWAS summary statistics. 
+The ``SNP.txt'' file includes the information of SNP names and ref alleles from the GWAS summary statistics. Please check plink manuals for LD calculations 
+**https://www.cog-genomics.org/plink/1.9/ld#r**
 
 ### Installation
 ```r
