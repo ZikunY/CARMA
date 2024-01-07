@@ -81,7 +81,7 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
       for(i in 1:L){
         
         q.list[[i]]<-ncol(w.list[[i]])
-        invariant.var.index<-which((apply(w.list[[i]][,-1],2,sd))==0)
+        invariant.var.index<-which((apply(as.matrix(w.list[[i]][,-1]),2,sd))==0)
         if(length(invariant.var.index)!=0){
           invariant.var<-w.list[[i]][,invariant.var.index+1]
           w.list[[i]]<-as.matrix(cbind(1,scale(w.list[[i]][,-1])))
