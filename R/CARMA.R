@@ -901,7 +901,7 @@ CARMA<-function(z.list,ld.list,w.list=NULL,lambda.list=NULL,output.labels='.',la
       writeMM(result.B.list[[2]],file=paste0(output.labels,'/post_',label,'_poi_gamma','.mtx'))
       write.table((result.prob),file=paste0(output.labels,'/post_', label,'.txt'),row.names = F,append = F,col.names = F)
       if(outlier.switch){
-        saveRDS(conditional.S.list,file=paste0(output.labels,'/post_', label,'_','outliers.RData'))
+        saveRDS(conditional.S.list,file=paste0(output.labels,'/post_', label,'_','outliers.RDS'))
       }
       }
 
