@@ -26,7 +26,7 @@ double Normal_fixed_sigma_marginal(const arma::uvec & index_vec_input, const arm
   arma::uvec index_vec=index_vec_input-1;
   
   arma::mat Sigma_S=Sigma.submat(index_vec,index_vec);
-  arma::mat Sigma_S_inv=pinv(Sigma_S,0.00001,"std");
+  arma::mat Sigma_S_inv=pinv(Sigma_S,0.00001,"dc");
   arma::mat sub_z=z.rows(index_vec);
   arma::mat zSigmaz_S=sub_z.t()*Sigma_S_inv*sub_z;
     double b;
