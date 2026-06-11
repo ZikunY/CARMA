@@ -28,8 +28,8 @@ double outlier_ind_Normal_marginal(const arma::uvec & index_vec_input, const arm
   arma::mat Sigma_S=Sigma.submat(index_vec,index_vec);
   arma::mat A=tau*arma::eye(p_S,p_S);
 
-  arma::mat Sigma_S_I_inv=pinv(Sigma_S+A,0.00001,"std");
-  arma::mat Sigma_S_inv=pinv(Sigma_S,0.00001,"std");
+  arma::mat Sigma_S_I_inv=pinv(Sigma_S+A,0.00001,"dc");
+  arma::mat Sigma_S_inv=pinv(Sigma_S,0.00001,"dc");
   
     double det_S=det(Sigma_S_inv);
     double det_I_S=det(Sigma_S_I_inv);
